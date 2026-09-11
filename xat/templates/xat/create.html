@@ -1,0 +1,914 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if is_edit %}Xatni tahrirlash{% else %}Yangi xat{% endif %} — Ijtimoiy yordam tizimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#e8ebf1; --main-bg:#f4f6f9; --card-bg:#ffffff;
+    --text-1:#14161f; --text-2:#6c7280; --text-3:#9aa0ad; --border:#edeff3;
+    --accent:#2596be; --accent-2:#5cb8db; --accent-soft:#e2f2f8;
+    --good:#2fb37c; --good-soft:rgba(47,179,124,.12);
+    --danger:#d9534f; --danger-soft:rgba(224,90,90,.12);
+    --purple:#8b5cf6;
+    --shadow-sm:0 2px 10px rgba(20,22,31,.04); --shadow-md:0 10px 30px rgba(20,22,31,.07); --shadow-lg:0 24px 60px -18px rgba(15,23,42,.3);
+    --radius-lg:24px; --radius-md:16px; --radius-sm:10px;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);font-family:'Poppins',-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text-1);-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{font-family:inherit}
+  [hidden]{display:none !important}
+
+  .shell{max-width:900px;margin:0 auto;padding:18px 18px 80px;display:flex;flex-direction:column;gap:18px}
+
+  .topbar{background:var(--card-bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--purple),#c084fc);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .brand-icon svg{width:21px;height:21px;stroke:#fff}
+  .brand-text b{display:block;font-size:15.5px;font-weight:700}
+  .brand-text span{display:block;font-size:12px;color:var(--text-3);font-weight:500}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;font-family:inherit;border-radius:12px;padding:10px 16px;cursor:pointer;border:1px solid var(--border);background:var(--card-bg);color:var(--text-1);transition:transform .2s cubic-bezier(.4,0,.2,1),box-shadow .2s ease}
+  .btn svg{width:16px;height:16px}
+  .btn:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);border-color:#cfd6e0}
+  .btn:active{transform:translateY(0) scale(.97)}
+  .btn-primary{background:var(--text-1);color:var(--main-bg);border-color:var(--text-1)}
+  .btn-primary:hover{box-shadow:0 10px 22px rgba(20,22,31,.25)}
+  .btn-primary:disabled{opacity:.6;cursor:default;transform:none}
+
+  .card{background:var(--card-bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px}
+  .card h3{margin:0 0 4px;font-size:16.5px}
+  .card .sub{margin:0 0 16px;font-size:12.5px;color:var(--text-3)}
+
+  .tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:700px){.tpl-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:460px){.tpl-grid{grid-template-columns:1fr}}
+  .tpl-opt{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;cursor:pointer;transition:.15s;background:var(--main-bg)}
+  .tpl-opt:hover{border-color:#cfd6e0}
+  .tpl-opt.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px rgba(37,150,190,.12)}
+  .tpl-opt .name{font-size:13.5px;font-weight:700}
+  .tpl-opt .desc{font-size:11.5px;color:var(--text-2);margin-top:3px;line-height:1.35}
+
+  /* Tanlanmagan shablon bo'limlari CSS orqali yashirilgan (JS ishlamay
+     qolsa ham xavfsiz default holat) — faqat .show qo'shilgan bo'lim
+     ko'rinadi. selectTemplate() shu klassni almashtiradi. */
+  .conditional-fields{display:none;animation:condFade .2s ease}
+  .conditional-fields.show{display:block}
+  @keyframes condFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .form-grid .full{grid-column:1 / -1}
+  @media (max-width:600px){.form-grid{grid-template-columns:1fr}}
+
+  .docx-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  .docx-status{font-size:12.5px;color:var(--text-2)}
+  .docx-status.ok{color:var(--good)}
+  .docx-status.error{color:var(--danger)}
+
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--text-1)}
+  .field .hint{display:block;font-size:11px;color:var(--text-3);margin-top:4px}
+  .field input[type=text],.field input[type=number]{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;transition:.15s}
+  .field input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .csel{position:relative}
+  .csel-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--main-bg);font-size:14px;color:var(--text-1);cursor:pointer;font-family:inherit;transition:.15s;text-align:left}
+  .csel-trigger .csel-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .csel-trigger:hover{border-color:#cfd6e0}
+  .csel.open .csel-trigger{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .csel-trigger .chev{width:14px;height:14px;flex-shrink:0;color:var(--text-3);transition:transform .2s ease}
+  .csel.open .csel-trigger .chev{transform:rotate(180deg)}
+  .csel-panel{position:fixed;z-index:1000;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);padding:6px;max-height:280px;overflow-y:auto;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s cubic-bezier(.4,0,.2,1),transform .18s cubic-bezier(.4,0,.2,1)}
+  .csel.open .csel-panel{opacity:1;visibility:visible;transform:translateY(0)}
+  .csel-opt{padding:9px 11px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--text-2);cursor:pointer;transition:background .15s ease,color .15s ease}
+  .csel-opt:hover{background:var(--accent-soft);color:var(--text-1)}
+  .csel-opt.selected{color:var(--accent);font-weight:700;background:var(--accent-soft)}
+
+  .cdate{position:relative}
+  .cdate-trigger{width:100%;display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--main-bg);font-size:14px;color:var(--text-1);cursor:pointer;font-family:inherit;transition:.15s;text-align:left}
+  .cdate-trigger:hover{border-color:#cfd6e0}
+  .cdate-trigger svg{width:16px;height:16px;color:var(--text-3);flex-shrink:0}
+  .cdate.open .cdate-trigger{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .cdate-trigger .val.placeholder{color:var(--text-3)}
+  .cal-panel{position:fixed;z-index:1000;width:270px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:14px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s cubic-bezier(.4,0,.2,1),transform .18s cubic-bezier(.4,0,.2,1)}
+  .cdate.open .cal-panel{opacity:1;visibility:visible;transform:translateY(0)}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cal-head b{font-size:13.5px;font-weight:700}
+  .cal-nav{width:26px;height:26px;border-radius:8px;border:none;background:var(--main-bg);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .cal-nav:hover{background:var(--accent-soft);color:var(--accent)}
+  .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+  .cal-weekdays span{text-align:center;font-size:10.5px;font-weight:700;color:var(--text-3);padding:4px 0}
+  .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:12.5px;font-weight:500;color:var(--text-1);cursor:pointer;transition:background .15s,color .15s;background:none;border:none;font-family:inherit}
+  .cal-day:hover{background:var(--accent-soft)}
+  .cal-day.muted{color:var(--text-3);opacity:.5}
+  .cal-day.today{font-weight:700;color:var(--accent)}
+  .cal-day.selected{background:var(--accent);color:#fff}
+  .cal-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);text-align:center}
+  .cal-today-btn{border:none;background:none;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+
+  .reason{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;background:var(--main-bg);margin-bottom:10px}
+  .reason-head{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600}
+  .reason-head input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
+  .reason-content{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+  .reason-content.show{display:block}
+  .dynamic-item{position:relative;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px}
+  .dynamic-item .item-number{font-size:12.5px;font-weight:700;color:var(--text-2);margin-bottom:10px}
+  .dynamic-item .remove-btn{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--main-bg);color:var(--danger);cursor:pointer;font-size:13px;line-height:1}
+  .dynamic-item .remove-btn:hover{background:var(--danger-soft)}
+  .dyn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .dyn-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .dyn-grid.cols-4{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:520px){.dyn-grid,.dyn-grid.cols-3,.dyn-grid.cols-4{grid-template-columns:1fr}}
+  .dyn-grid .field label{font-size:11.5px}
+  .add-btn{border:1.5px dashed var(--border);background:#fff;color:var(--text-2);border-radius:var(--radius-sm);padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:.15s}
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+  .isqayta{display:flex;gap:18px;margin-bottom:14px}
+  .radio-opt{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;cursor:pointer}
+  .radio-opt input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+
+  .note{font-size:12.5px;color:var(--text-2);background:var(--accent-soft);border-radius:var(--radius-sm);padding:12px 14px}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,20px);background:var(--text-1);color:var(--main-bg);padding:12px 20px;border-radius:100px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-md);opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:2000;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.error{background:var(--danger)}
+  .toast.success{background:var(--good)}
+
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:18px;background:var(--card-bg);padding:14px 22px;border-radius:var(--radius-lg);box-shadow:var(--shadow-md)}
+
+  @media (max-width:640px){.shell{padding:14px 12px 90px}.topbar{padding:14px 16px}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+      <div class="brand-text"><b>{% if is_edit %}Xatni tahrirlash{% else %}Yangi xat yaratish{% endif %}</b><span>IHMA rasmiy xat shablonlari</span></div>
+    </div>
+    <a href="{% url 'xat:dashboard' %}" class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Ro'yxatga qaytish
+    </a>
+  </div>
+
+  <div class="card">
+    <h3>Shablon turi</h3>
+    <p class="sub">Yaratmoqchi bo'lgan xat turini tanlang</p>
+    <div class="tpl-grid" id="templateSelector">
+      {% for kod, nom in template_choices %}
+        <div class="tpl-opt" data-template="{{ kod }}"><div class="name">{{ nom }}</div></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Asosiy ma'lumotlar</h3>
+    <p class="sub">Barcha shablon turlari uchun umumiy</p>
+
+    <div class="docx-upload" id="docxUpload">
+      <button type="button" class="btn" id="docxUploadBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Murojaat docx yuklash
+      </button>
+      <input type="file" id="docxFileInput" accept=".docx" hidden>
+      <span class="docx-status" id="docxStatus"></span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field"><label>MFY nomi *</label><input type="text" id="mfyNomi" name="mfyNomi" placeholder="Masalan: Katta Guzar"></div>
+      <div class="field"><label>Ko'cha nomi *</label><input type="text" id="street" name="street" placeholder="Masalan: Anisiy"></div>
+      <div class="field"><label>F.I.O *</label><input type="text" id="fio" name="fio" placeholder="Familiya Ism Sharifi"></div>
+      <div class="field">
+        <label>Qayerdan murojaat *</label>
+        <input type="text" id="murojaatfrom" name="murojaatfrom" list="murojaatfromList" placeholder="Masalan: O'zbekiston Respublikasi Prezidentiga ishonch telefoni">
+        <datalist id="murojaatfromList">
+          {% for label, value in xat_from %}<option value="{{ value }}" label="{{ label }}">{% endfor %}
+        </datalist>
+      </div>
+      <div class="field">
+        <label>Murojaat sanasi *</label>
+        <div class="cdate" id="murojaatVaqtiPicker">
+          <button type="button" class="cdate-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="val placeholder">Sanani tanlang</span></button>
+          <div class="cal-panel" hidden>
+            <div class="cal-head"><button type="button" class="cal-nav" data-shift="-1">&lsaquo;</button><b class="cal-month-label"></b><button type="button" class="cal-nav" data-shift="1">&rsaquo;</button></div>
+            <div class="cal-weekdays"><span>Du</span><span>Se</span><span>Ch</span><span>Pa</span><span>Ju</span><span>Sh</span><span>Ya</span></div>
+            <div class="cal-days"></div>
+            <div class="cal-foot"><button type="button" class="cal-today-btn">Bugun</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="murojaatVaqti" name="murojaatVaqti">
+      </div>
+      <div class="field">
+        <label>Murojaat raqami *</label>
+        <input type="text" id="murojaatRaqami" name="murojaatRaqami" placeholder="325650/26">
+        <span class="hint">Masalan: 325650/26</span>
+      </div>
+    </div>
+
+    <div class="form-grid" id="arizaInfoGrid" style="margin-top:14px">
+      <div class="field"><label>Ariza maqsadi</label><input type="text" id="arizaMaqsadi" name="arizaMaqsadi" placeholder="Ariza maqsadi"></div>
+      <div class="field"><label>Ariza raqami (ID) *</label><input type="text" id="arizaID" name="arizaID" placeholder="32065423"></div>
+      <div class="field">
+        <label>Ariza sanasi *</label>
+        <div class="cdate" id="arizaVaqtiPicker">
+          <button type="button" class="cdate-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="val placeholder">Sanani tanlang</span></button>
+          <div class="cal-panel" hidden>
+            <div class="cal-head"><button type="button" class="cal-nav" data-shift="-1">&lsaquo;</button><b class="cal-month-label"></b><button type="button" class="cal-nav" data-shift="1">&rsaquo;</button></div>
+            <div class="cal-weekdays"><span>Du</span><span>Se</span><span>Ch</span><span>Pa</span><span>Ju</span><span>Sh</span><span>Ya</span></div>
+            <div class="cal-days"></div>
+            <div class="cal-foot"><button type="button" class="cal-today-btn">Bugun</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="arizaVaqti" name="arizaVaqti">
+      </div>
+    </div>
+  </div>
+
+  <!-- RAD -->
+  <div class="card conditional-fields show" id="radFields">
+    <h3>Rad etish sabablari</h3>
+    <p class="sub">Kamida bittasini tanlang</p>
+
+    <div class="isqayta">
+      <label class="radio-opt"><input type="radio" name="isQayta" value="true" id="isQaytaHa">Ha (qayta o'rganilganda)</label>
+      <label class="radio-opt"><input type="radio" name="isQayta" value="false" id="isQaytaYoq" checked>Yo'q (o'rganilganda)</label>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="uydaEmasRad" name="uydaEmasRad">Uyda bo'lmagan</label>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="uyRadToggle" name="uyRadToggle">Ko'chmas mulk mavjud</label>
+      <div class="reason-content" id="uyRadContent">
+        <div id="uyRadContainer"></div>
+        <button type="button" class="add-btn" id="addUyRad">+ Ko'chmas mulk qo'shish</button>
+      </div>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="avtoRadToggle" name="avtoRadToggle">Avtomobil mavjud</label>
+      <div class="reason-content" id="avtoRadContent">
+        <div id="avtoRadContainer"></div>
+        <button type="button" class="add-btn" id="addAvtoRad">+ Avtomobil qo'shish</button>
+      </div>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="rasmiyRadToggle" name="rasmiyRadToggle">Rasmiy daromad mavjud</label>
+      <div class="reason-content" id="rasmiyRadContent">
+        <div id="rasmiyRadContainer"></div>
+        <button type="button" class="add-btn" id="addRasmiyRad">+ Daromad qo'shish</button>
+      </div>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="norasmiyRad" name="norasmiyRad">Norasmiy daromad mavjud</label>
+    </div>
+  </div>
+
+  <!-- TASDIQLANDI -->
+  <div class="card conditional-fields" id="tasdiqlandiFields">
+    <h3>Tasdiqlash ma'lumotlari</h3>
+    <div class="form-grid">
+      <div class="field"><label>Tasdiqlash sanasi *</label><input type="text" id="tasdiqSanasi" name="tasdiqSanasi" placeholder="2026, Mart"><span class="hint">Masalan: 2026, Mart</span></div>
+      <div class="field"><label>To'lov sanasi *</label><input type="text" id="tolovSanasi" name="tolovSanasi" placeholder="2026, Aprel"><span class="hint">Masalan: 2026, Aprel</span></div>
+      <div class="field"><label>Hisob raqami *</label><input type="text" id="xisobRaqam" name="xisobRaqam" placeholder="222222223545404"></div>
+      <div class="field"><label>To'lov summasi *</label><input type="text" id="tolovSum" name="tolovSum" placeholder="1450543.00"><span class="hint">So'mda kiriting</span></div>
+    </div>
+  </div>
+
+  <!-- TAYINLANDI -->
+  <div class="card conditional-fields" id="tayinlandiFields">
+    <h3>Tayinlash ma'lumotlari</h3>
+    <div class="field"><label>Qo'shimcha ma'lumot</label><input type="text" id="tayinlashQoshimcha" name="tayinlashQoshimcha" placeholder="Ixtiyoriy qo'shimcha ma'lumot"></div>
+    <p class="note" style="margin-top:12px">Bu shablon uchun qo'shimcha ma'lumotlar kerak emas. Faqat asosiy ma'lumotlar va Ariza raqami yetarli.</p>
+  </div>
+
+  <!-- MUDDAT -->
+  <div class="card conditional-fields" id="muddatFields">
+    <h3>Muddat so'rash ma'lumotlari</h3>
+    <div class="field"><label>Qo'shimcha ma'lumot</label><input type="text" id="qoshimchaMalumot" name="qoshimchaMalumot" placeholder="Ixtiyoriy qo'shimcha ma'lumot"></div>
+    <p class="note" style="margin-top:12px">Bu shablon uchun qo'shimcha ma'lumotlar kerak emas. Faqat asosiy ma'lumotlar va Murojaat raqami yetarli.</p>
+  </div>
+
+  <!-- ARIZA KIRITILGAN -->
+  <div class="card conditional-fields" id="arizaKiritilganFields">
+    <h3>Ariza kiritilgan</h3>
+    <p class="note">Yuqoridagi "Asosiy ma'lumotlar" va Ariza maqsadi/ID/sanasi barchasi to'ldirilishi kerak.</p>
+  </div>
+
+  <div class="form-actions">
+    <a href="{% url 'xat:dashboard' %}" class="btn">Bekor qilish</a>
+    <button type="button" class="btn btn-primary" id="generateBtn">{% if is_edit %}Saqlash{% else %}Xat yaratish{% endif %}</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script id="xat-data" type="application/json">{{ xat_json|safe }}</script>
+<script src="{% static 'core/vendor/jszip.min.js' %}"></script>
+<script>
+(function(){
+  const IS_EDIT = {{ is_edit|yesno:"true,false" }};
+  const XAT_ID = {{ xat_id|default_if_none:"null" }};
+  const EXISTING = JSON.parse(document.getElementById('xat-data').textContent);
+
+  /* ---------------- TOAST ---------------- */
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg, type){
+    toastEl.textContent = msg;
+    toastEl.className = 'toast show' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toastEl.classList.remove('show'), 4500);
+  }
+
+  /* ---------------- KIRIL -> LOTIN ---------------- */
+  const KRIL_MAP = {
+    'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'Ye','Ё':'Yo','Ж':'J','З':'Z','И':'I',
+    'Й':'Y','К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T',
+    'У':'U','Ф':'F','Х':'X','Ц':'S','Ч':'Ch','Ш':'Sh','Ъ':"'",'Ы':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
+    'а':'a','б':'b','в':'v','г':'g','д':'d','е':'ye','ё':'yo','ж':'j','з':'z','и':'i',
+    'й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t',
+    'у':'u','ф':'f','х':'x','ц':'s','ч':'ch','ш':'sh','ъ':"'",'ы':'i','ь':'','э':'e','ю':'yu','я':'ya',
+    'Ў':"O'",'ў':"o'",'Қ':'Q','қ':'q','Ғ':"G'",'ғ':"g'",'Ҳ':'H','ҳ':'h',
+  };
+  // "е"/"Е" so'z boshida yoki unlidan keyin "ye"/"Ye", undoshdan keyin esa
+  // "e" bo'ladi (masalan "Республикаси" -> "Respublikasi", "Президентига" ->
+  // "Prezidentiga" — undoshdan keyingi holat; "Ешлик" -> "Yeshlik" — so'z
+  // boshi). Boshqa harflar statik KRIL_MAP orqali bir xilda almashtiriladi.
+  const KRIL_UNLILAR = "aeiouAEIOUаеёиоуыэюяАЕЁИОУЫЭЮЯ";
+  function krilToLotin(text){
+    if (!text) return text;
+    let out = '';
+    for (let i = 0; i < text.length; i++){
+      const ch = text[i];
+      if (ch === 'е' || ch === 'Е'){
+        const prev = i > 0 ? text[i - 1] : '';
+        const soznBoshi = !prev || !/[a-zA-Zа-яА-ЯёЁўЎқҚғҒҳҲ'ʻʼ]/.test(prev);
+        const ye = soznBoshi || KRIL_UNLILAR.indexOf(prev) !== -1;
+        out += ch === 'Е' ? (ye ? 'Ye' : 'E') : (ye ? 'ye' : 'e');
+      } else {
+        out += KRIL_MAP[ch] !== undefined ? KRIL_MAP[ch] : ch;
+      }
+    }
+    return out;
+  }
+  function toTitleCase(str){
+    if (!str) return '';
+    str = str.trim().replace(/\s+/g, ' ');
+    return str.toLowerCase().replace(/(^|[.\s])([a-zʻʼ])/g, (m, sep, c) => sep + c.toUpperCase());
+  }
+  function toSentenceCase(str){
+    if (!str) return '';
+    str = str.toLowerCase();
+    const m = str.match(/[a-zʻʼ]/);
+    if (!m) return str;
+    const i = m.index;
+    return str.slice(0, i) + str[i].toUpperCase() + str.slice(i + 1);
+  }
+  function getVal(id){ return krilToLotin((document.getElementById(id).value || '').trim()); }
+  function getCheck(id){ return document.getElementById(id).checked || false; }
+
+  /* ---------------- MUROJAAT DOCX YUKLASH ----------------
+     Murojaat qabul qilingan tashkilotning rasmiy intake-hujjati (masalan
+     "Rahbar sayyor qabuli", "Prezidentga ishonch telefoni" orqali kelgan
+     murojaat) — barchasi bir xil jadval-shaklida keladi (raqamlangan
+     qatorlar + doimiy belgilar). Fayl butunlay brauzerda (JSZip bilan)
+     ochiladi — hech narsa serverga yuborilmaydi. */
+  const MUROJAAT_LABELS = {
+    raqami: 'Мурожаат тартиб рақами',
+    operator: 'Оператор рақами',
+    sana: 'Мурожаат тушган сана ва вақт',
+    tashkilotgaSana: 'Ташкилотга келиб тушган сана ва вақт',
+    fio: 'Мурожаат этувчи Ф.И.О.',
+    manzil: 'Мурожаат этувчининг манзили',
+    jinsi: 'Мурожаат этувчи жинси',
+  };
+
+  function docxExtractBetween(text, startLabel, endLabel){
+    const startIdx = text.indexOf(startLabel);
+    if (startIdx === -1) return '';
+    const from = startIdx + startLabel.length;
+    const endIdx = endLabel ? text.indexOf(endLabel, from) : -1;
+    const raw = endIdx === -1 ? text.slice(from) : text.slice(from, endIdx);
+    return raw
+      .replace(/^[\s:|.\-]+/, '')
+      // Jadvalning keyingi qatori o'z raqami (masalan "2", "3.1") bilan
+      // alohida abzats sifatida keladi — u shu yerga, qiymatning oxiriga
+      // ilashib qoladi, shuning uchun kesib tashlanadi.
+      .replace(/\n\s*\d+(\.\d+)?\s*$/, '')
+      .trim();
+  }
+
+  function docxParseDate(raw){
+    const m = String(raw).match(/(\d{2})\.(\d{2})\.(\d{4})/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+  }
+
+  // "Андижон вилояти / Андижон тумани / Дарё бўйи МФЙ / ДАРЁБЎЙИ МФЙ,
+  // ОЙБОШИ КЎЧАСИ, uy:H/C" kabi ko'p qatorli manzildan MFY nomi va ko'cha
+  // nomini ajratib oladi (uy raqami/MFY takrori tashlab yuboriladi).
+  function docxParseAddress(manzilRaw){
+    const lines = manzilRaw.split('\n').map(s => s.trim()).filter(Boolean);
+    const mfyLine = lines.find(l => /мфй/i.test(l)) || '';
+    const mfyNomi = mfyLine.replace(/мфй/gi, '').replace(/[,.\s]+$/, '').trim();
+
+    const streetLine = lines.slice().reverse().find(l => /(кўчас|кучас|ko['ʻ]?chas|kochas)/i.test(l)) || '';
+    const parts = streetLine.split(',').map(s => s.trim()).filter(Boolean);
+    let streetPart = parts.find(p => /(кўчас|кучас|ko['ʻ]?chas|kochas)/i.test(p)) || parts[0] || '';
+    streetPart = streetPart
+      .replace(/кўчас[аи]?|кучас[аи]?|ko['ʻ]?chas[ai]?|kochas[ai]?/gi, '')
+      // \b lotin harflari uchun ishlaydi, lekin "уй" kirilcha — shuning uchun
+      // \b ishlatilmaydi, uy raqamidan boshlab qolgan hammasi kesiladi.
+      .replace(/\d+[-\s]?(уй|uy).*/i, '')
+      .replace(/uy\s*:\s*\S+/i, '')
+      .replace(/[,.\s]+$/, '')
+      .trim();
+
+    return { mfyNomi, street: streetPart };
+  }
+
+  async function docxReadFullText(file){
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const entry = zip.file('word/document.xml');
+    if (!entry) throw new Error("Fayl ichida word/document.xml topilmadi — bu .docx fayl emasmi?");
+    const xmlText = await entry.async('text');
+    const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if (xmlDoc.getElementsByTagName('parsererror').length) {
+      throw new Error("Fayl XML tuzilishini o'qib bo'lmadi.");
+    }
+    // Har bir <w:p> (abzats) ichidagi barcha <w:t> matn bo'laklarini
+    // birlashtiradi, abzatslar orasiga "\n" qo'yadi — python-docx'ning
+    // paragraph.text xatti-harakatiga o'xshash.
+    const paragraphs = Array.from(xmlDoc.getElementsByTagName('w:p')).map(p =>
+      Array.from(p.getElementsByTagName('w:t')).map(t => t.textContent).join('')
+    );
+    return paragraphs.join('\n');
+  }
+
+  function docxParseFields(fullText){
+    // Sarlavha qatori: "... орқали келиб тушган мурожаат" — shu qismidan
+    // OLDINGI matn tashkilot/manba nomi, "орқали келиб тушган мурожаат"
+    // o'zi yozilmaydi.
+    const orgMatch = fullText.match(/^([\s\S]*?)орқали\s+келиб\s+тушган\s+мурожаат/i);
+    const tashkilot = orgMatch ? krilToLotin(orgMatch[1].trim()) : '';
+
+    const raqami = docxExtractBetween(fullText, MUROJAAT_LABELS.raqami, MUROJAAT_LABELS.operator);
+    const sanaRaw = docxExtractBetween(fullText, MUROJAAT_LABELS.sana, MUROJAAT_LABELS.tashkilotgaSana);
+    const fioRaw = docxExtractBetween(fullText, MUROJAAT_LABELS.fio, MUROJAAT_LABELS.manzil);
+    const manzilRaw = docxExtractBetween(fullText, MUROJAAT_LABELS.manzil, MUROJAAT_LABELS.jinsi);
+    const { mfyNomi, street } = docxParseAddress(manzilRaw);
+
+    return {
+      murojaatfrom: tashkilot,
+      murojaatRaqami: krilToLotin(raqami),
+      murojaatVaqti: docxParseDate(sanaRaw),
+      fio: toTitleCase(krilToLotin(fioRaw)),
+      mfyNomi: toTitleCase(krilToLotin(mfyNomi)),
+      street: toTitleCase(krilToLotin(street)),
+    };
+  }
+
+  function docxShowStatus(msg, type){
+    const el = document.getElementById('docxStatus');
+    el.textContent = msg;
+    el.className = 'docx-status' + (type ? ' ' + type : '');
+  }
+
+  document.getElementById('docxUploadBtn').addEventListener('click', () => {
+    document.getElementById('docxFileInput').click();
+  });
+
+  document.getElementById('docxFileInput').addEventListener('change', async function(){
+    const file = this.files && this.files[0];
+    this.value = '';
+    if (!file) return;
+
+    docxShowStatus("Fayl o'qilmoqda...", '');
+    try {
+      const fullText = await docxReadFullText(file);
+      const fields = docxParseFields(fullText);
+
+      let filledCount = 0;
+      if (fields.murojaatfrom){ document.getElementById('murojaatfrom').value = fields.murojaatfrom; filledCount++; }
+      if (fields.murojaatRaqami){ document.getElementById('murojaatRaqami').value = fields.murojaatRaqami; filledCount++; }
+      if (fields.murojaatVaqti){ murojaatVaqtiPicker.setValue(fields.murojaatVaqti); filledCount++; }
+      if (fields.fio){ document.getElementById('fio').value = fields.fio; filledCount++; }
+      if (fields.mfyNomi){ document.getElementById('mfyNomi').value = fields.mfyNomi; filledCount++; }
+      if (fields.street){ document.getElementById('street').value = fields.street; filledCount++; }
+
+      if (filledCount){
+        docxShowStatus(`✓ ${filledCount} ta maydon to'ldirildi. Tekshirib chiqing.`, 'ok');
+      } else {
+        docxShowStatus("Fayldan tanish maydonlar topilmadi — qo'lda to'ldiring.", 'error');
+      }
+    } catch (e){
+      docxShowStatus('Xatolik: ' + e.message, 'error');
+    }
+  });
+
+  /* ---------------- TEMPLATE SELECTOR ---------------- */
+  const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat'];
+  const fieldMap = {
+    rad: 'radFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
+    muddat: 'muddatFields', arizaKiritilgan: 'arizaKiritilganFields',
+  };
+  let currentTemplate = 'rad';
+
+  function selectTemplate(tpl){
+    currentTemplate = tpl;
+    document.querySelectorAll('.tpl-opt').forEach(el => el.classList.toggle('active', el.dataset.template === tpl));
+    document.querySelectorAll('.conditional-fields').forEach(el => el.classList.toggle('show', el.id === fieldMap[tpl]));
+    document.getElementById('arizaInfoGrid').style.display = TEMPLATES_WITHOUT_ARIZA_INFO.includes(tpl) ? 'none' : 'grid';
+  }
+  document.querySelectorAll('.tpl-opt').forEach(el => {
+    el.addEventListener('click', () => selectTemplate(el.dataset.template));
+  });
+
+  /* ---------------- CUSTOM SELECT / DATEPICKER (umumiy) ---------------- */
+  function closeAllPanels(){
+    document.querySelectorAll('.csel.open').forEach(el => { el.classList.remove('open'); const p = el.querySelector('.csel-panel'); if (p) p.hidden = true; });
+    document.querySelectorAll('.cdate.open').forEach(el => { el.classList.remove('open'); const p = el.querySelector('.cal-panel'); if (p) p.hidden = true; });
+  }
+  function positionPanel(trigger, panel, matchWidth){
+    const rect = trigger.getBoundingClientRect();
+    const panelHeight = panel.offsetHeight || 260;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp = spaceBelow < panelHeight + 12 && rect.top > panelHeight + 12;
+    panel.style.left = Math.max(8, rect.left) + 'px';
+    if (matchWidth) panel.style.width = rect.width + 'px';
+    if (openUp){ panel.style.top = 'auto'; panel.style.bottom = (window.innerHeight - rect.top + 6) + 'px'; }
+    else { panel.style.bottom = 'auto'; panel.style.top = (rect.bottom + 6) + 'px'; }
+  }
+  document.addEventListener('click', closeAllPanels);
+  window.addEventListener('resize', closeAllPanels);
+  window.addEventListener('scroll', closeAllPanels, true);
+
+  document.querySelectorAll('.csel').forEach(csel => {
+    const trigger = csel.querySelector('.csel-trigger');
+    const panel = csel.querySelector('.csel-panel');
+    const hiddenInput = document.getElementById(csel.dataset.select);
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const willOpen = !csel.classList.contains('open');
+      closeAllPanels();
+      if (willOpen){ panel.hidden = false; positionPanel(trigger, panel, true); requestAnimationFrame(()=> csel.classList.add('open')); }
+    });
+    panel.querySelectorAll('.csel-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        hiddenInput.value = opt.dataset.value;
+        csel.querySelectorAll('.csel-opt').forEach(o => o.classList.toggle('selected', o === opt));
+        csel.querySelector('.csel-label').textContent = opt.textContent;
+        closeAllPanels();
+      });
+    });
+  });
+
+  const OY_NOMLARI = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function isoOf(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function displayOf(iso){ const [y,m,d] = iso.split('-'); return `${d}.${m}.${y}`; }
+
+  function initDatepicker(rootId, hiddenId){
+    const root = document.getElementById(rootId);
+    const hiddenInput = document.getElementById(hiddenId);
+    const trigger = root.querySelector('.cdate-trigger');
+    const valSpan = root.querySelector('.val');
+    const panel = root.querySelector('.cal-panel');
+    let viewDate = new Date();
+    let selectedISO = null;
+
+    function render(){
+      root.querySelector('.cal-month-label').textContent = `${OY_NOMLARI[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+      const daysWrap = panel.querySelector('.cal-days');
+      daysWrap.innerHTML = '';
+      const year = viewDate.getFullYear(), month = viewDate.getMonth();
+      let startOffset = new Date(year, month, 1).getDay() - 1;
+      if (startOffset < 0) startOffset = 6;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrev = new Date(year, month, 0).getDate();
+      const todayISO = isoOf(new Date());
+      const cells = [];
+      for (let i=0;i<startOffset;i++) cells.push({day: daysInPrev-startOffset+i+1, muted:true, iso:null});
+      for (let d=1; d<=daysInMonth; d++) cells.push({day:d, muted:false, iso:`${year}-${pad2(month+1)}-${pad2(d)}`});
+      while (cells.length < 42){ cells.push({day: cells.length - (startOffset+daysInMonth) + 1, muted:true, iso:null}); }
+      cells.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'cal-day'; btn.textContent = c.day;
+        if (c.muted) btn.classList.add('muted');
+        if (c.iso === todayISO) btn.classList.add('today');
+        if (c.iso && c.iso === selectedISO) btn.classList.add('selected');
+        if (c.iso) btn.addEventListener('click', () => select(c.iso));
+        else btn.disabled = true;
+        daysWrap.appendChild(btn);
+      });
+    }
+    function select(iso){
+      selectedISO = iso;
+      hiddenInput.value = iso;
+      valSpan.textContent = displayOf(iso);
+      valSpan.classList.remove('placeholder');
+      closeAllPanels();
+    }
+    function setValue(iso){
+      if (!iso){ selectedISO = null; hiddenInput.value=''; valSpan.textContent='Sanani tanlang'; valSpan.classList.add('placeholder'); viewDate = new Date(); return; }
+      selectedISO = iso; hiddenInput.value = iso; valSpan.textContent = displayOf(iso); valSpan.classList.remove('placeholder');
+      const [y,m] = iso.split('-'); viewDate = new Date(Number(y), Number(m)-1, 1);
+    }
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const willOpen = !root.classList.contains('open');
+      closeAllPanels();
+      if (willOpen){ panel.hidden = false; render(); positionPanel(trigger, panel, false); requestAnimationFrame(()=> root.classList.add('open')); }
+    });
+    root.addEventListener('click', e => e.stopPropagation());
+    panel.querySelectorAll('.cal-nav').forEach(btn => btn.addEventListener('click', () => {
+      viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + Number(btn.dataset.shift), 1);
+      render();
+    }));
+    panel.querySelector('.cal-today-btn').addEventListener('click', () => { const n = new Date(); viewDate = new Date(n.getFullYear(), n.getMonth(), 1); select(isoOf(n)); render(); });
+
+    return { setValue };
+  }
+  const murojaatVaqtiPicker = initDatepicker('murojaatVaqtiPicker', 'murojaatVaqti');
+  const arizaVaqtiPicker = initDatepicker('arizaVaqtiPicker', 'arizaVaqti');
+
+  /* Avtofill kengaytmalari yashirin inputlarga to'g'ridan-to'g'ri qiymat yozib,
+     "input"/"change" hodisasini yuborishi mumkin — bunday holda ko'rinadigan
+     custom sana ko'rsatkichlarini ham shu qiymatga moslab yangilaymiz. */
+  document.getElementById('murojaatVaqti').addEventListener('change', function(){ if (this.value) murojaatVaqtiPicker.setValue(this.value); });
+  document.getElementById('arizaVaqti').addEventListener('change', function(){ if (this.value) arizaVaqtiPicker.setValue(this.value); });
+
+  /* ---------------- DINAMIK GURUHLAR (uyRad / avtoRad / rasmiyRad) ---------------- */
+  let uyRadCount = 0, avtoRadCount = 0, rasmiyRadCount = 0;
+  const labels = { uyRad: "Ko'chmas mulk", avtoRad: "Avtomobil", rasmiyRad: "Daromad" };
+
+  function addUyRad(prefill){
+    uyRadCount++;
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+    div.innerHTML = `
+      <button type="button" class="remove-btn" data-remove="uyRad">&times;</button>
+      <div class="item-number">Ko'chmas mulk #${uyRadCount}</div>
+      <div class="dyn-grid">
+        <div class="field"><label>Uy manzili</label><input type="text" class="uyRad-manzil" placeholder="Anisiy ko'chasi, 20-xonadon"></div>
+        <div class="field"><label>Kadastr raqami</label><input type="text" class="uyRad-kadastr" placeholder="17:20:325:42-1004:20"></div>
+      </div>`;
+    document.getElementById('uyRadContainer').appendChild(div);
+    if (prefill){ div.querySelector('.uyRad-manzil').value = prefill.uyManzil || ''; div.querySelector('.uyRad-kadastr').value = prefill.uyKadastr || ''; }
+  }
+  function addAvtoRad(prefill){
+    avtoRadCount++;
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+    div.innerHTML = `
+      <button type="button" class="remove-btn" data-remove="avtoRad">&times;</button>
+      <div class="item-number">Avtomobil #${avtoRadCount}</div>
+      <div class="dyn-grid cols-3">
+        <div class="field"><label>Yili</label><input type="text" class="avtoRad-yil" placeholder="2017"></div>
+        <div class="field"><label>Rusumi</label><input type="text" class="avtoRad-model" placeholder="Damas"></div>
+        <div class="field"><label>Davlat raqami</label><input type="text" class="avtoRad-raqam" placeholder="60S342DB"></div>
+      </div>`;
+    document.getElementById('avtoRadContainer').appendChild(div);
+    if (prefill){ div.querySelector('.avtoRad-yil').value = prefill.avtoYil || ''; div.querySelector('.avtoRad-model').value = prefill.avtoModel || ''; div.querySelector('.avtoRad-raqam').value = prefill.avtoRaqam || ''; }
+  }
+  function addRasmiyRad(prefill){
+    rasmiyRadCount++;
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+    div.innerHTML = `
+      <button type="button" class="remove-btn" data-remove="rasmiyRad">&times;</button>
+      <div class="item-number">Daromad #${rasmiyRadCount}</div>
+      <div class="dyn-grid cols-4">
+        <div class="field"><label>Egasi</label><input type="text" class="rasmiyRad-egasi" placeholder="Mullajonov Rozivoy"></div>
+        <div class="field"><label>Miqdori (so'm)</label><input type="text" class="rasmiyRad-miqdori" placeholder="2450999"></div>
+        <div class="field"><label>Tashkilot</label><input type="text" class="rasmiyRad-tashkilot" placeholder="Maktabgacha talim muasasi"></div>
+        <div class="field"><label>Davri</label><input type="text" class="rasmiyRad-davri" placeholder="2026, Mart"></div>
+      </div>`;
+    document.getElementById('rasmiyRadContainer').appendChild(div);
+    if (prefill){
+      div.querySelector('.rasmiyRad-egasi').value = prefill.egasi || '';
+      div.querySelector('.rasmiyRad-miqdori').value = prefill.miqdori || '';
+      div.querySelector('.rasmiyRad-tashkilot').value = prefill.tashkilot || '';
+      div.querySelector('.rasmiyRad-davri').value = prefill.davri || '';
+    }
+  }
+  function renumberItems(type){
+    const containerId = type + 'Container';
+    const items = document.querySelectorAll(`#${containerId} .dynamic-item`);
+    items.forEach((item, i) => { item.querySelector('.item-number').textContent = `${labels[type]} #${i+1}`; });
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove]');
+    if (!btn) return;
+    const type = btn.dataset.remove;
+    if (!confirm("Ushbu ma'lumotni o'chirmoqchimisiz?")) return;
+    btn.closest('.dynamic-item').remove();
+    if (type === 'uyRad') uyRadCount--; else if (type === 'avtoRad') avtoRadCount--; else if (type === 'rasmiyRad') rasmiyRadCount--;
+    renumberItems(type);
+  });
+  document.getElementById('addUyRad').addEventListener('click', () => addUyRad());
+  document.getElementById('addAvtoRad').addEventListener('click', () => addAvtoRad());
+  document.getElementById('addRasmiyRad').addEventListener('click', () => addRasmiyRad());
+
+  document.getElementById('uyRadToggle').addEventListener('change', function(){
+    document.getElementById('uyRadContent').classList.toggle('show', this.checked);
+    if (this.checked && uyRadCount === 0) addUyRad();
+  });
+  document.getElementById('avtoRadToggle').addEventListener('change', function(){
+    document.getElementById('avtoRadContent').classList.toggle('show', this.checked);
+    if (this.checked && avtoRadCount === 0) addAvtoRad();
+  });
+  document.getElementById('rasmiyRadToggle').addEventListener('change', function(){
+    document.getElementById('rasmiyRadContent').classList.toggle('show', this.checked);
+    if (this.checked && rasmiyRadCount === 0) addRasmiyRad();
+  });
+
+  /* ---------------- MA'LUMOT YIG'ISH ---------------- */
+  function collectData(){
+    const isQaytaEl = document.querySelector('input[name="isQayta"]:checked');
+    const data = {
+      fio: toTitleCase(getVal('fio')),
+      street: toTitleCase(getVal('street')),
+      mfyNomi: toTitleCase(getVal('mfyNomi')),
+      murojaatfrom: getVal('murojaatfrom'),
+      murojaatRaqami: getVal('murojaatRaqami'),
+      murojaatVaqti: document.getElementById('murojaatVaqti').value || '',
+      arizaMaqsadi: getVal('arizaMaqsadi').toLowerCase(),
+      arizaVaqti: document.getElementById('arizaVaqti').value || '',
+      arizaID: getVal('arizaID'),
+      template: currentTemplate,
+      isQayta: isQaytaEl ? isQaytaEl.value === 'true' : false,
+      tasdiqMalumotlari: { is:false, tasdiqSanasi:'', tolovSanasi:'', tolovSum:'', xsobraqam:'' },
+    };
+
+    if (currentTemplate === 'rad'){
+      data.radSabablari = {
+        uydaEmasRad: getCheck('uydaEmasRad'),
+        norasmiyRad: getCheck('norasmiyRad'),
+        uyRad: Array.from(document.querySelectorAll('#uyRadContainer .dynamic-item')).map(item => ({
+          uyManzil: krilToLotin(item.querySelector('.uyRad-manzil').value.trim()),
+          uyKadastr: item.querySelector('.uyRad-kadastr').value.trim(),
+        })),
+        avtoRad: Array.from(document.querySelectorAll('#avtoRadContainer .dynamic-item')).map(item => ({
+          avtoYil: item.querySelector('.avtoRad-yil').value.trim(),
+          avtoModel: krilToLotin(item.querySelector('.avtoRad-model').value.trim()),
+          avtoRaqam: item.querySelector('.avtoRad-raqam').value.trim(),
+        })),
+        rasmiyRad: Array.from(document.querySelectorAll('#rasmiyRadContainer .dynamic-item')).map(item => ({
+          egasi: krilToLotin(toSentenceCase(item.querySelector('.rasmiyRad-egasi').value.trim())),
+          miqdori: item.querySelector('.rasmiyRad-miqdori').value.trim(),
+          tashkilot: krilToLotin(toSentenceCase(item.querySelector('.rasmiyRad-tashkilot').value.trim())),
+          davri: krilToLotin(item.querySelector('.rasmiyRad-davri').value.trim()),
+        })),
+      };
+    } else if (currentTemplate === 'tasdiqlandi'){
+      data.tasdiqMalumotlari = { is:true, tasdiqSanasi:getVal('tasdiqSanasi'), tolovSanasi:getVal('tolovSanasi'), tolovSum:getVal('tolovSum'), xsobraqam:getVal('xisobRaqam') };
+    } else if (currentTemplate === 'tayinlandi'){
+      data.tayinlashQoshimcha = getVal('tayinlashQoshimcha');
+    } else if (currentTemplate === 'muddat'){
+      data.qoshimchaMalumot = getVal('qoshimchaMalumot');
+    }
+    return data;
+  }
+
+  function validate(data){
+    const errors = [];
+    if (!data.fio) errors.push("F.I.O kiriting!");
+    if (!data.mfyNomi) errors.push("MFY nomini kiriting!");
+    if (!data.street) errors.push("Ko'cha nomini kiriting!");
+    if (!data.murojaatfrom) errors.push("Murojaat manbasini tanlang!");
+    if (!data.murojaatVaqti) errors.push("Murojaat sanasini tanlang!");
+    if (!data.murojaatRaqami) errors.push("Murojaat raqamini kiriting!");
+
+    if (!TEMPLATES_WITHOUT_ARIZA_INFO.includes(data.template)){
+      if (!data.arizaVaqti) errors.push("Ariza sanasini tanlang!");
+      if (!data.arizaID) errors.push("Ariza raqamini (ID) kiriting!");
+      if (!data.arizaMaqsadi) errors.push("Ariza maqsadini tanlang!");
+    }
+
+    if (data.template === 'rad'){
+      const rad = data.radSabablari;
+      const hasReason = rad.uydaEmasRad || rad.norasmiyRad || rad.uyRad.length>0 || rad.avtoRad.length>0 || rad.rasmiyRad.length>0;
+      if (!hasReason) errors.push("Kamida bitta rad etish sababini tanlang!");
+      if (getCheck('uyRadToggle') && rad.uyRad.length===0) errors.push('"Ko\'chmas mulk" tanlangan, lekin hech qanday mulk qo\'shilmagan!');
+      if (getCheck('avtoRadToggle') && rad.avtoRad.length===0) errors.push('"Avtomobil" tanlangan, lekin hech qanday avtomobil qo\'shilmagan!');
+      if (getCheck('rasmiyRadToggle') && rad.rasmiyRad.length===0) errors.push('"Rasmiy daromad" tanlangan, lekin hech qanday daromad qo\'shilmagan!');
+    }
+    if (data.template === 'tasdiqlandi'){
+      const t = data.tasdiqMalumotlari;
+      if (!t.tasdiqSanasi) errors.push("Tasdiqlash sanasini kiriting!");
+      if (!t.tolovSanasi) errors.push("To'lov sanasini kiriting!");
+      if (!t.xsobraqam) errors.push("Hisob raqamini kiriting!");
+      if (!t.tolovSum) errors.push("To'lov summasini kiriting!");
+    }
+    return errors;
+  }
+
+  /* ---------------- SUBMIT ---------------- */
+  function getCookie(name){
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  const generateBtn = document.getElementById('generateBtn');
+  generateBtn.addEventListener('click', async () => {
+    const data = collectData();
+    const errors = validate(data);
+    if (errors.length){ showToast(errors.join(' / '), 'error'); return; }
+
+    generateBtn.disabled = true;
+    const originalText = generateBtn.textContent;
+    generateBtn.textContent = '...';
+
+    const url = IS_EDIT ? `/xat/${XAT_ID}/edit/save/` : `/xat/create/save/`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (result.success){
+        showToast('Muvaffaqiyatli saqlandi!', 'success');
+        setTimeout(() => { window.location.href = result.redirect || '/xat/'; }, 500);
+      } else {
+        showToast((result.errors ? result.errors.join(' / ') : result.error) || 'Xatolik yuz berdi', 'error');
+      }
+    } catch (e){
+      showToast('Server bilan bog\'lanib bo\'lmadi: ' + e.message, 'error');
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalText;
+    }
+  });
+
+  /* ---------------- TAHRIRLASH: MAVJUD MA'LUMOTNI TO'LDIRISH ---------------- */
+  function fillFromExisting(d){
+    document.getElementById('fio').value = d.fio || '';
+    document.getElementById('mfyNomi').value = d.mfyNomi || '';
+    document.getElementById('street').value = d.street || '';
+    document.getElementById('murojaatRaqami').value = d.murojaatRaqami || '';
+    document.getElementById('arizaMaqsadi').value = d.arizaMaqsadi || '';
+    document.getElementById('arizaID').value = d.arizaID || '';
+
+    document.getElementById('murojaatfrom').value = d.murojaatfrom || '';
+    if (d.murojaatVaqti) murojaatVaqtiPicker.setValue(d.murojaatVaqti);
+    if (d.arizaVaqti) arizaVaqtiPicker.setValue(d.arizaVaqti);
+
+    document.getElementById('isQaytaHa').checked = !!d.isQayta;
+    document.getElementById('isQaytaYoq').checked = !d.isQayta;
+
+    if (d.template === 'rad' && d.radSabablari){
+      const rad = d.radSabablari;
+      document.getElementById('uydaEmasRad').checked = !!rad.uydaEmasRad;
+      document.getElementById('norasmiyRad').checked = !!rad.norasmiyRad;
+      if (rad.uyRad && rad.uyRad.length){
+        document.getElementById('uyRadToggle').checked = true;
+        document.getElementById('uyRadContent').classList.add('show');
+        rad.uyRad.forEach(it => addUyRad(it));
+      }
+      if (rad.avtoRad && rad.avtoRad.length){
+        document.getElementById('avtoRadToggle').checked = true;
+        document.getElementById('avtoRadContent').classList.add('show');
+        rad.avtoRad.forEach(it => addAvtoRad(it));
+      }
+      if (rad.rasmiyRad && rad.rasmiyRad.length){
+        document.getElementById('rasmiyRadToggle').checked = true;
+        document.getElementById('rasmiyRadContent').classList.add('show');
+        rad.rasmiyRad.forEach(it => addRasmiyRad(it));
+      }
+    } else if (d.template === 'tasdiqlandi' && d.tasdiqMalumotlari){
+      document.getElementById('tasdiqSanasi').value = d.tasdiqMalumotlari.tasdiqSanasi || '';
+      document.getElementById('tolovSanasi').value = d.tasdiqMalumotlari.tolovSanasi || '';
+      document.getElementById('xisobRaqam').value = d.tasdiqMalumotlari.xsobraqam || '';
+      document.getElementById('tolovSum').value = d.tasdiqMalumotlari.tolovSum || '';
+    } else if (d.template === 'tayinlandi'){
+      document.getElementById('tayinlashQoshimcha').value = d.tayinlashQoshimcha || '';
+    } else if (d.template === 'muddat'){
+      document.getElementById('qoshimchaMalumot').value = d.qoshimchaMalumot || '';
+    }
+  }
+
+  /* ---------------- BOSHLANG'ICH HOLAT ---------------- */
+  selectTemplate('rad');
+  if (IS_EDIT && EXISTING){
+    selectTemplate(EXISTING.template || 'rad');
+    fillFromExisting(EXISTING);
+  }
+})();
+</script>
+</body>
+</html>

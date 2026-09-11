@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ xat.fio }} — {{ xat.get_template_display }}</title>
+<style>
+  :root{--bg:#e8ebf1;--card-bg:#ffffff;--text-1:#14161f;--text-2:#6c7280;--accent:#2596be;--border:#edeff3;--radius-md:16px;--shadow-md:0 10px 30px rgba(20,22,31,.08);color-scheme:light}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:26px 16px 60px}
+  .toolbar{max-width:760px;margin:0 auto 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;border-radius:11px;padding:9px 15px;cursor:pointer;border:1px solid var(--border);background:var(--card-bg);color:var(--text-1);text-decoration:none;transition:.15s}
+  .btn:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+  .btn svg{width:15px;height:15px}
+  .btn-primary{background:var(--text-1);color:#fff;border-color:var(--text-1)}
+
+  .paper{
+    max-width:760px;margin:0 auto;background:var(--card-bg);border-radius:var(--radius-md);
+    box-shadow:var(--shadow-md);padding:44px 52px;
+    font-family:'Times New Roman',Times,serif;font-size:14pt;line-height:1.5;color:#000;
+  }
+  .pochta{font-weight:bold;text-align:left;margin:0 0 14px;padding-left:260px}
+  .murojaat{font-style:italic;font-size:12pt;margin:0 0 18px;padding-right:180px}
+  .body-p{text-align:justify;text-indent:34px;margin:0 0 8px}
+  .signature{margin-top:24px}
+  .signature .row{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:14px}
+  .signature .ijrochi{font-style:italic;font-size:9pt;font-weight:bold}
+
+  @media print{
+    body{background:#fff;padding:0}
+    .toolbar{display:none}
+    .paper{box-shadow:none;border-radius:0;max-width:100%;padding:20px 30px}
+  }
+  @media (max-width:640px){
+    .paper{padding:26px 20px}
+    .pochta{padding-left:0}
+    .murojaat{padding-right:0}
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <a href="{% url 'xat:dashboard' %}" class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Orqaga
+    </a>
+    <div style="display:flex;gap:10px">
+      <a href="{% url 'xat:export' xat.id %}" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Word (.docx)
+      </a>
+      <button type="button" class="btn" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Chop etish
+      </button>
+    </div>
+  </div>
+
+  <div class="paper">
+    <p class="pochta">{{ pochta_html|safe }}</p>
+    <p class="murojaat">{{ murojaat_html|safe }}</p>
+    {% for p in paragraphs %}
+      {% if p %}<p class="body-p">{{ p|safe }}</p>{% endif %}
+    {% endfor %}
+
+    {% if has_signature %}
+    <div class="signature">
+      <div class="row"><span>{{ tashkilot_nomi }} direktori:</span><span>{{ tashkilot_rahbar }}</span></div>
+      <p class="ijrochi">Ijrochi: {{ ijrochi }}</p>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>
