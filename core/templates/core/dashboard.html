@@ -171,6 +171,10 @@
   .modal{background:var(--card-bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;transition:max-width .25s cubic-bezier(.4,0,.2,1)}
   .modal.wide{max-width:980px}
   .modal-columns{display:block}
+  /* .modal-columns'ning to'g'ridan-to'g'ri 2 ta bolasi bo'lishi kerak:
+     .modal-col-left (yuklash tugmasi + forma maydonlari) va #sabablarBlock.
+     Aks holda grid ularni navbat bilan katakka joylashtirib, sabablarBlock
+     ikkinchi qatorga (forma pastiga) tushib qolardi. */
   .modal.wide .modal-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:start}
   .modal.wide .modal-columns #sabablarBlock{
     border-left:1px solid var(--border);padding-left:24px;
@@ -538,6 +542,7 @@
       {% csrf_token %}
       <div class="modal-body">
         <div class="modal-columns" id="modalColumns">
+        <div class="modal-col-left">
         <div class="docx-upload" id="docxUpload">
           <button type="button" class="btn" id="docxUploadBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -635,6 +640,7 @@
             <input type="text" name="kollegal_qaror" id="id_kollegal_qaror" placeholder="masalan: 7845754">
             <span class="hint">Mahalla yettiligi qarori raqami</span>
           </div>
+        </div>
         </div>
 
         <div id="sabablarBlock" hidden>

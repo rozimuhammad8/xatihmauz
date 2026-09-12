@@ -670,3 +670,72 @@ class KollegalQarorTest(TestCase):
         javob = self.client_.get(reverse("core:dashboard"))
         self.assertContains(javob, "Kollegal qaror raqami")
         self.assertContains(javob, "7845754")
+
+
+class RadXulosaTest(TestCase):
+    """Har bir rad sababi "... sizga <dastur> tayinlash rad etildi." bilan
+    tugashi va shablon/kod/ko'rinish uchalasi bir xil bo'lishi."""
+
+    MAQSAD = "oziq-ovqat xarajatlarini qoplash"
+    SABABLAR = {
+        "avtoRad": [{"avtoYil": "2021", "avtoModel": "Cobalt", "avtoRaqam": "30A123BC"}],
+        "uyRad": [{"uyManzil": "A 1", "uyKadastr": "K1"}],
+        "rasmiyRad": [{"egasi": "a diyor", "miqdori": "1450543",
+                       "tashkilot": "HOKIMLIK", "davri": "iyun, 2026"}],
+        "norasmiyRad": True,
+        "uydaEmasRad": True,
+    }
+
+    def _xat(self, **rad):
+        return {
+            "template": "rad", "fio": "Test Fuqaro", "mfyNomi": "Mart",
+            "street": "Anisiy", "murojaatfrom": "Ishonch", "murojaatRaqami": "1/26",
+            "murojaatVaqti": "2026-07-16", "arizaMaqsadi": self.MAQSAD,
+            "arizaVaqti": "2026-06-03", "arizaID": "32065423", "isQayta": True,
+            "tashkilotNomi": "Markaz", "tashkilotRahbar": "S.Mutalibov",
+            "ijrochi": "D.Atamirzayev", "radSabablari": rad,
+            "tasdiqMalumotlari": {"is": False},
+        }
+
+    def test_har_bir_sabab_xulosa_bilan_tugaydi(self):
+        from reestr.docx_templates import render_letter
+        xulosa = f"sizga {self.MAQSAD} tayinlash rad etildi."
+        for sabab, qiymat in self.SABABLAR.items():
+            with self.subTest(sabab=sabab):
+                matn = docx_matni(render_letter(self._xat(**{sabab: qiymat})).read())
+                bandlar = [
+                    q for q in matn.split("\n")
+                    if "rad etildi" in q and "quydagilar sababli" not in q
+                ]
+                self.assertEqual(len(bandlar), 1, f"{sabab}: bitta band kutilgan")
+                self.assertTrue(
+                    bandlar[0].rstrip().endswith(xulosa)
+                    or xulosa in bandlar[0],       # oxirida "(Asos: ...)" bo'lishi mumkin
+                    bandlar[0],
+                )
+                self.assertNotIn("sababli sababli", matn)
+
+    def test_shablon_kod_va_korinish_bir_xil(self):
+        import re as _re
+        from reestr import docx_generator as dg
+        from reestr.docx_templates import render_letter
+        from reestr.letter_text import build_preview
+
+        data = self._xat(**self.SABABLAR)
+        kod = docx_matni(dg.build_letter_document(data).read())
+        shablon = docx_matni(render_letter(data).read())
+        self.assertEqual(kod, shablon, "shablon va kod generatori farq qilmasin")
+
+        _, _, paras, _ = build_preview(data)
+        for p in paras:
+            toza = (_re.sub(r"<[^>]+>", "", p).replace("&#x27;", "'")
+                    .replace("&quot;", '"').replace("&amp;", "&"))
+            self.assertIn(toza, shablon.replace("\n", " ") + shablon,
+                          f"ko'rinishdagi abzats .docx da yo'q: {toza[:80]}")
+
+    def test_daromad_jumlasi_ikki_nuqtasiz(self):
+        """income_text() nuqtasiz tugaydi — ortidan xulosa ulanadi."""
+        from reestr.docx_generator import income_text
+        matn = income_text(self.SABABLAR["rasmiyRad"])
+        self.assertFalse(matn.endswith("."), matn[-40:])
+        self.assertTrue(matn.endswith("yuqori ekanligi"), matn[-40:])

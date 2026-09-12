@@ -59,17 +59,21 @@ def rad_paragraphs(data):
     if rad.get("avtoRad"):
         paras.append(_p(
             [("Sizning oilangiz foydalanuvida bo'lgan ", {})] + dg.car_segments(rad["avtoRad"]) +
-            [(" mavjudligi sababli.", {})] + [dg.asos_segment("(Asos: VM 35-son qarori 4-bob v-band.)")]
+            [(" mavjudligi sababli", {})] + dg.rad_xulosa_segments(data) +
+            [dg.asos_segment("(Asos: VM 35-son qarori 4-bob v-band.)")]
         ))
     if rad.get("uyRad"):
         paras.append(_p(
             [(f"Sizning oilangiz nomiga rasmiylashtirilgan {len(rad['uyRad'])} ta ko'chmas mulk (", {})] +
-            dg.uy_segments(rad["uyRad"]) + [(") mavjudligi sababli.", {})] +
+            dg.uy_segments(rad["uyRad"]) + [(") mavjudligi sababli", {})] +
+            dg.rad_xulosa_segments(data) +
             [dg.asos_segment("(Asos: VM 35-son qarori 4-bob b-band.)")]
         ))
     if rad.get("rasmiyRad"):
         paras.append(_p([
             (dg.income_text(rad["rasmiyRad"]), {}),
+            (" sababli", {}),
+        ] + dg.rad_xulosa_segments(data) + [
             dg.asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
         ]))
     if rad.get("norasmiyRad"):
@@ -77,7 +81,8 @@ def rad_paragraphs(data):
             ("O'rganish natijasida ", {}), ("“mahalla yettiligi”", {"bold": True}),
             (" tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
              "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
-             "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli.", {}),
+             "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli", {}),
+        ] + dg.rad_xulosa_segments(data) + [
             dg.asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
         ]))
     if rad.get("uydaEmasRad"):
@@ -85,7 +90,7 @@ def rad_paragraphs(data):
             "Ijtimoiy xodim tomonidan yashash sharoitini o'rganish maqsadida amalga oshirilgan "
             "tashrif davomida sizni yashash manzilida mavjud bo'lmaganligi sababli ijtimoiy "
             "holatini o'rganish imkoni bo'lmadi. Natijada murojaat bo'yicha zarur o'rganish "
-            "yakunlanmaganligi sababli ijobiy qaror qabul qilishning imkoni bo'lmagani.", {})]))
+            "yakunlanmaganligi sababli", {})] + dg.rad_xulosa_segments(data)))
 
     paras.append(_p([(dg.APPEAL_PARAGRAPH, {})]))
     return paras

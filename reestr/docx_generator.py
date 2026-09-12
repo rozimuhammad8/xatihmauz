@@ -224,11 +224,27 @@ def income_text(items):
         year = parts[1].strip() if len(parts) > 1 else ''
         amount = format_amount(it.get('miqdori'))
         incomes.append(f"{year}-yil {month} oyi uchun {amount} so'm")
+    # Jumla ATAYLAB nuqtasiz tugaydi: ortidan rad_xulosa_segments() ning
+    # " sababli sizga ... tayinlash rad etildi." qismi ulanadi.
     return (
         ' va '.join(orgs) + ' tomonidan ' + ' va '.join(owners) + "ga " +
         ', '.join(incomes) +
-        " oylik daromad hisoblangan va bu minimal iste'mol xarajatlaridan yuqori ekanligi."
+        " oylik daromad hisoblangan va bu minimal iste'mol xarajatlaridan yuqori ekanligi"
     )
+
+
+def rad_xulosa_segments(data):
+    """Har bir rad sababining oxiriga qo'shiladigan umumiy xulosa.
+
+    Sabab jumlasi "... sababli" bilan tugaydi, bu funksiya esa
+    "sizga <dastur nomi> tayinlash rad etildi." qismini qo'shadi — natijada
+    har bir band nima uchun va nima rad etilganini o'zi to'liq aytadi.
+    """
+    return [
+        (" sizga ", {}),
+        (data.get('arizaMaqsadi', ''), {'bold': True}),
+        (" tayinlash rad etildi.", {}),
+    ]
 
 
 def asos_segment(text):
@@ -464,20 +480,24 @@ def build_rad(doc, data):
 
     if rad.get('avtoRad'):
         body_paragraph(doc, [("Sizning oilangiz foydalanuvida bo'lgan ", {})] +
-                       car_segments(rad['avtoRad']) + [(" mavjudligi sababli.", {})] +
+                       car_segments(rad['avtoRad']) + [(" mavjudligi sababli", {})] +
+                       rad_xulosa_segments(data) +
                        [asos_segment("(Asos: VM 35-son qarori 4-bob v-band.)")])
 
     if rad.get('uyRad'):
         body_paragraph(
             doc,
             [(f"Sizning oilangiz nomiga rasmiylashtirilgan {len(rad['uyRad'])} ta ko'chmas mulk (", {})] +
-            uy_segments(rad['uyRad']) + [(") mavjudligi sababli.", {})] +
+            uy_segments(rad['uyRad']) + [(") mavjudligi sababli", {})] +
+            rad_xulosa_segments(data) +
             [asos_segment("(Asos: VM 35-son qarori 4-bob b-band.)")],
         )
 
     if rad.get('rasmiyRad'):
         body_paragraph(doc, [
             (income_text(rad['rasmiyRad']), {}),
+            (" sababli", {}),
+        ] + rad_xulosa_segments(data) + [
             asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
         ])
 
@@ -488,9 +508,10 @@ def build_rad(doc, data):
             (
                 " tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
                 "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
-                "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli.",
+                "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli",
                 {},
             ),
+        ] + rad_xulosa_segments(data) + [
             asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
         ])
 
@@ -499,9 +520,9 @@ def build_rad(doc, data):
             "Ijtimoiy xodim tomonidan yashash sharoitini o'rganish maqsadida amalga oshirilgan "
             "tashrif davomida sizni yashash manzilida mavjud bo'lmaganligi sababli ijtimoiy "
             "holatini o'rganish imkoni bo'lmadi. Natijada murojaat bo'yicha zarur o'rganish "
-            "yakunlanmaganligi sababli ijobiy qaror qabul qilishning imkoni bo'lmagani.",
+            "yakunlanmaganligi sababli",
             {},
-        )])
+        )] + rad_xulosa_segments(data))
 
     body_paragraph(doc, [(APPEAL_PARAGRAPH, {})])
     add_signature_block(doc, data)

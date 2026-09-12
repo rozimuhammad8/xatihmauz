@@ -106,7 +106,10 @@ def qur_rad(doc):
         (SHART_AVTO, {}),
         ("Sizning oilangiz foydalanuvida bo'lgan ", {}),
         (P_AVTO_ROYXATI, {}),
-        (" mavjudligi sababli.", {}),
+        (" mavjudligi sababli", {}),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
         dg.asos_segment("(Asos: VM 35-son qarori 4-bob v-band.)"),
     ])
     body_paragraph(doc, [
@@ -115,12 +118,19 @@ def qur_rad(doc):
         (P_UY_SONI, {}),
         (" ta ko'chmas mulk (", {}),
         (P_UY_ROYXATI, {}),
-        (") mavjudligi sababli.", {}),
+        (") mavjudligi sababli", {}),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
         dg.asos_segment("(Asos: VM 35-son qarori 4-bob b-band.)"),
     ])
     body_paragraph(doc, [
         (SHART_RASMIY, {}),
         (P_RASMIY_MATNI, {}),
+        (" sababli", {}),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
         dg.asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
     ])
     body_paragraph(doc, [
@@ -130,9 +140,12 @@ def qur_rad(doc):
         (
             " tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
             "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
-            "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli.",
+            "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli",
             {},
         ),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
         dg.asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
     ])
     body_paragraph(doc, [
@@ -141,9 +154,12 @@ def qur_rad(doc):
             "Ijtimoiy xodim tomonidan yashash sharoitini o'rganish maqsadida amalga oshirilgan "
             "tashrif davomida sizni yashash manzilida mavjud bo'lmaganligi sababli ijtimoiy "
             "holatini o'rganish imkoni bo'lmadi. Natijada murojaat bo'yicha zarur o'rganish "
-            "yakunlanmaganligi sababli ijobiy qaror qabul qilishning imkoni bo'lmagani.",
+            "yakunlanmaganligi sababli",
             {},
         ),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
     ])
 
     body_paragraph(doc, [(dg.APPEAL_PARAGRAPH, {})])
