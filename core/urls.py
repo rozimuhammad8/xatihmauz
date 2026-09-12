@@ -19,3 +19,13 @@ urlpatterns = [
     path("xizmat/<int:pk>/delete/", views.xizmat_delete, name="xizmat_delete"),
     path("xizmat/<int:pk>/export/", views.xizmat_export, name="xizmat_export"),
 ]
+
+from django.http import HttpResponse
+from django.urls import re_path
+
+def custom_404(request):
+    return HttpResponse("404 — Page not found", status=404)
+
+urlpatterns += [
+    re_path(r"^.*$", custom_404),
+]
