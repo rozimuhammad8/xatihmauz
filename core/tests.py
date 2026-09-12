@@ -532,15 +532,26 @@ class XatoliklargaChidamlilikTest(TestCase):
         self.assertTrue(any("topilmadi" in x.lower() for x in xabarlar), xabarlar)
 
     def test_fayl_nomida_taqiqlangan_belgilar_bolmaydi(self):
+        import re as _re
         ariza = self._ariza()
         Ariza.objects.filter(pk=ariza.pk).update(fio='Test "Fuqaro" / Ism')
         javob = self.client_.get(reverse("core:ariza_export", args=[ariza.pk]))
         self.assertEqual(javob.status_code, 200)
-        fayl_nomi = javob["Content-Disposition"].split('filename="')[1].rstrip('"')
-        for belgi in '\/:*?<>|':
+        sarlavha = javob["Content-Disposition"]
+        # Sarlavha endi ikki qism: filename="..." (ASCII zaxira) va
+        # filename*=UTF-8''... (to'liq nom, RFC 6266) — faqat birinchisining
+        # QIYMATI taqiqlangan belgilardan xoli bo'lishi kerak ("*" belgisi
+        # filename*= PARAMETR NOMINING o'zida bor, bu normal va xato emas.
+        m = _re.search(r'filename="([^"]*)"', sarlavha)
+        self.assertIsNotNone(m, sarlavha)
+        fayl_nomi = m.group(1)
+        for belgi in "\\/:*?<>|":
             self.assertNotIn(belgi, fayl_nomi)
-        self.assertNotIn('"', fayl_nomi)
         self.assertTrue(fayl_nomi.endswith(".docx"))
+        # Sarlavhaning o'zi Latin-1 bilan kodlana olishi SHART (WSGI talabi) —
+        # aks holda server xato beradi yoki sarlavhani butunlay tashlab
+        # yuboradi (brauzerda "download.docx" bo'lib qolgan haqiqiy xato shu edi).
+        sarlavha.encode("latin-1")
 
     def test_sana_turli_formatda_qabul_qilinadi(self):
         for kiritilgan in ("2026-05-01", "01.05.2026", "01/05/2026"):
@@ -564,14 +575,7 @@ class XatoliklargaChidamlilikTest(TestCase):
         self.assertEqual(ariza.fio, "Murojaat Etuvchi")
         self.assertEqual(ariza.mfy, "Katta Guzar")
 
-    def test_404_sahifasi_ozbekcha(self):
-        from django.test import RequestFactory
-        from config.xatolar import xato_404
-        javob = xato_404(RequestFactory().get("/yoq/"))
-        self.assertEqual(javob.status_code, 404)
-        self.assertIn("Adashib qoldingiz", javob.content.decode())
-
-    def test_boshqa_xato_sahifalari_ozbekcha(self):
+    def test_xato_sahifalari_ozbekcha(self):
         from django.template.defaultfilters import escape
         from django.test import RequestFactory
         from config.xatolar import MATNLAR, xato_400, xato_403, xato_500
@@ -809,3 +813,50 @@ class RadXulosaTest(TestCase):
         matn = income_text(self.SABABLAR["rasmiyRad"])
         self.assertFalse(matn.endswith("."), matn[-40:])
         self.assertTrue(matn.endswith("yuqori ekanligi"), matn[-40:])
+
+
+class FaylNomiSarlavhasiTest(TestCase):
+    """Content-Disposition — fuqaro ismida o'zbekcha maxsus harf (o', g', ʻ)
+    yoki kirilcha bo'lsa ham brauzer to'g'ri nom bilan saqlashi kerak
+    ("download.docx" bo'lib qolmasligi kerak — real xato shu edi)."""
+
+    def test_maxsus_apostrof_bilan_ham_ishlaydi(self):
+        from core.docx_utils import content_disposition_header, xavfsiz_fayl_nomi
+        variantlar = [
+            "Ataboyeva Go'zaloy Adxamjon qizi.docx",
+            "Ataboyeva Go\u02bbzaloy Adxamjon qizi.docx",
+            "Ataboyeva Go\u2019zaloy Adxamjon qizi.docx",
+            "Файзуллаева Гулнора.docx",
+        ]
+        for nom in variantlar:
+            with self.subTest(nom=nom):
+                xavfsiz = xavfsiz_fayl_nomi(nom, sukut="hujjat.docx")
+                sarlavha = content_disposition_header(xavfsiz)
+                # HTTP sarlavhasi har doim Latin-1 bilan kodlana olishi shart
+                # (aks holda Django/WSGI xato beradi yoki server sarlavhani
+                # butunlay tashlab yuboradi — "download.docx" bilan tugagan
+                # haqiqiy xato shu edi).
+                sarlavha.encode("latin-1")
+                self.assertIn('filename="', sarlavha)
+                self.assertIn("filename*=UTF-8''", sarlavha)
+                self.assertNotEqual(xavfsiz_fayl_nomi(nom), "")
+
+    def test_ariza_eksporti_togri_sarlavha_beradi(self):
+        tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
+        user = User.objects.create_user("bosh", password="p")
+        user.profil.tashkilot = tashkilot
+        user.profil.save()
+        client_ = Client()
+        client_.login(username="bosh", password="p")
+        client_.post(reverse("core:ariza_create"), dict(
+            kategoriya="oziq_ovqat", holat="rad", mfy="a", kucha="b",
+            fio="Ataboyeva Go'zaloy Adxamjon qizi", tashkilot="d",
+            sana="2026-05-01", murojaat_raqami="1", ariza_raqami="2",
+            rad_sabablari=["reestr"],
+        ))
+        ariza = Ariza.objects.latest("id")
+        javob = client_.get(reverse("core:ariza_export", args=[ariza.pk]))
+        sarlavha = javob["Content-Disposition"]
+        sarlavha.encode("latin-1")
+        self.assertIn("filename*=UTF-8''", sarlavha)
+        self.assertIn("Go", sarlavha)

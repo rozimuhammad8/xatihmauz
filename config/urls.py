@@ -15,8 +15,8 @@ urlpatterns = [
 
 # Xodim uchun tushunarli o'zbekcha xato sahifalari (config/xatolar.py).
 # Faqat DEBUG=False bo'lganda ishlaydi — ishlab chiqishda Django'ning
-# batafsil xato sahifasi foydaliroq.
+# batafsil xato sahifasi foydaliroq. 404 uchun maxsus sahifa yo'q — Django'ning
+# o'z sukut 404 sahifasi ishlatiladi.
 handler400 = "config.xatolar.xato_400"
 handler403 = "config.xatolar.xato_403"
-handler404 = "config.xatolar.xato_404"
 handler500 = "config.xatolar.xato_500"

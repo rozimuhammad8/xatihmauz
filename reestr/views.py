@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from core.decorators import reestr_talab
+from core.docx_utils import ShablonTopilmadi, content_disposition_header
 from core.text_utils import raqamli_matn, sanani_oqish, tozalangan_matn
 
 from .docx_generator import format_money, safe_filename, to_title_case
@@ -305,12 +306,14 @@ def xat_export(request, pk):
     if not _xat_uchun_ruxsat(request, xat):
         return HttpResponseForbidden("Sizga bu xatni yuklab olishga ruxsat yo'q.")
     letter = xat.to_letter_dict()
-    # Shablons/reeystr/*.docx dan o'qiladi; shablon topilmasa docx_generator'ga
-    # qaytadi (qarang: docx_templates.render_letter). Shunday bo'lsa ham
-    # hujjat yasashda kutilmagan xatolik chiqsa, foydalanuvchi oq sahifa
-    # emas, tushunarli xabar ko'rishi kerak.
+    # Shablons/reeystr/*.docx dan o'qiladi (qarang: docx_templates.render_letter).
+    # Shablon topilmasa yoki hujjat yasashda kutilmagan xatolik chiqsa,
+    # foydalanuvchi oq sahifa emas, tushunarli xabar ko'rishi kerak.
     try:
         buffer = render_letter(letter)
+    except ShablonTopilmadi as xato:
+        messages.error(request, str(xato))
+        return redirect("reestr:dashboard")
     except Exception:
         logger.exception("Xat eksportida xatolik (xat id=%s)", xat.pk)
         messages.error(
@@ -323,7 +326,10 @@ def xat_export(request, pk):
         buffer.read(),
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    response["Content-Disposition"] = f'attachment; filename="{safe_filename(letter)}"'
+    # RFC 6266 kodlash — fuqaro ismida o'zbekcha maxsus harf (o', g', ʻ, ʼ)
+    # bo'lsa ham brauzer to'g'ri nom bilan saqlaydi (aks holda "download.docx"
+    # deb qo'yib yuboradi, aynan shu xato kuzatilgan edi).
+    response["Content-Disposition"] = content_disposition_header(safe_filename(letter))
     return response
 
 

@@ -12,6 +12,9 @@ almashtirilishi kerak. Shu mantiq uyjoy.py dasturidan olingan va bu yerda
 bitta joyda saqlanadi.
 """
 import copy
+import re
+import unicodedata
+from urllib.parse import quote
 
 from docx.oxml.ns import qn
 
@@ -295,3 +298,64 @@ def replace_with_segments(paragraph, placeholder, segments):
     if after:
         anchor.addnext(_make_run(p_elem, rpr_src, after))
     return True
+
+
+# ------------------------------------------------------------
+# YUKLAB OLISH FAYL NOMI (Content-Disposition)
+# ------------------------------------------------------------
+_TAQIQLANGAN_BELGILAR = re.compile(r'[\/:*?"<>|]+')
+
+
+def _ascii_zaxira_nomi(nomi):
+    """Eski brauzerlar uchun ASCII zaxira nomi: diakritik belgili lotin
+    harflari (unicodedata orqali) oddiy harfga tushiriladi, qolgan ASCII
+    bo'lmagan belgilar (kirilcha va h.k.) olib tashlanadi.
+
+    Natijada harf/raqam umuman qolmasa (masalan butunlay kirilcha nom —
+    faqat ".docx" kabi kengaytma qoladi), bo'sh qatorga tenglashtiriladi —
+    chaqiruvchi shu holatda umumiy zaxira nomiga (masalan "hujjat.docx")
+    o'tishi uchun."""
+    normallashgan = unicodedata.normalize("NFKD", nomi)
+    faqat_ascii = normallashgan.encode("ascii", "ignore").decode("ascii")
+    faqat_ascii = re.sub(r"[^A-Za-z0-9._-]+", "_", faqat_ascii).strip("_")
+    # Kengaytmani (masalan ".docx") olib tashlab tekshiramiz — aks holda
+    # kengaytmaning o'z harflari "mazmun bor" deb noto'g'ri hisoblanardi.
+    tanasi = re.sub(r"\.[A-Za-z0-9]+$", "", faqat_ascii)
+    if not re.search(r"[A-Za-z0-9]", tanasi):
+        return ""
+    return faqat_ascii
+
+
+def xavfsiz_fayl_nomi(nomi, sukut="hujjat"):
+    r"""Fayl nomidan Windows/brauzer taqiqlagan belgilarni (\ / : * ? " < > |)
+    olib tashlaydi va bo'sh joylarni "_" ga almashtiradi. O'zbekcha maxsus
+    harflar (o', g', ʻ, ʼ) SAQLANIB QOLADI — ular Windows uchun taqiqlanmagan,
+    faqat Content-Disposition sarlavhasida alohida kodlanishi kerak (qarang:
+    content_disposition_header)."""
+    tozalangan = _TAQIQLANGAN_BELGILAR.sub("", nomi)
+    tozalangan = re.sub(r"\s+", "_", tozalangan).strip("_")
+    return tozalangan or sukut
+
+
+def content_disposition_header(fayl_nomi):
+    """`Content-Disposition: attachment; filename=...` qiymatini RFC 6266 ga
+    mos tarzda quradi.
+
+    Fuqaro ismida o'zbekcha maxsus belgi (masalan "Go'zaloy" dagi ʻ/' harfi
+    kod nuqtasiga qarab, yoki mobil klaviaturada avtomatik almashtirilgan
+    qayrilgan tirnoq ’) bo'lsa, oddiy `filename="..."` HTTP sarlavhasi
+    Latin-1'ga sig'maydi — Django buni yuborishda xato beradi yoki server
+    proksisi buzilgan sarlavhani butunlay tashlab yuboradi, natijada brauzer
+    umuman nom topolmay "download.docx" deb ataydi (aynan shu xato kuzatilgan).
+
+    Yechim ikkala qiymatni ham beradi:
+      filename="..."   — faqat ASCII zaxira (eski brauzerlar uchun)
+      filename*=UTF-8'' — to'liq, asl nom (RFC 5987 foiz-kodlash bilan;
+                          bu qism har doim ASCII-xavfsiz, chunki quote()
+                          barcha ASCII bo'lmagan baytlarni %XX ko'rinishiga
+                          o'giradi)
+    Zamonaviy brauzerlarning barchasi filename*= ni afzal ko'radi.
+    """
+    ascii_nom = _ascii_zaxira_nomi(fayl_nomi) or "hujjat.docx"
+    utf8_nom = quote(fayl_nomi, safe="")
+    return f'attachment; filename="{ascii_nom}"; filename*=UTF-8\'\'{utf8_nom}'

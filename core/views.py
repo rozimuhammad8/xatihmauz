@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from django.contrib import messages
 from django.contrib.auth import views as auth_views
@@ -14,6 +13,7 @@ from django.views.generic import TemplateView
 
 from .decorators import RolTalabMixin, bosh_ijtimoiy_talab
 from .docx_export import ShablonTopilmadi, ariza_docx_yaratish
+from .docx_utils import content_disposition_header, xavfsiz_fayl_nomi
 from .xizmat_export import xizmat_docx_yaratish
 from .forms import ArizaForm, XizmatHujjatiForm
 from .models import Ariza, XizmatHujjati, XodimProfil
@@ -199,13 +199,15 @@ def ariza_delete(request, pk):
 
 def _docx_javobi(buffer, fayl_nomi):
     """Tayyor .docx ni yuklab olinadigan javobga o'raydi. Fayl nomidagi
-    Windows ruxsat bermaydigan belgilar olib tashlanadi."""
-    xavfsiz_nom = re.sub(r'[\/:*?"<>|]+', "", fayl_nomi).replace(" ", "_").strip("_")
+    Windows ruxsat bermaydigan belgilar olib tashlanadi, o'zbekcha maxsus
+    harflar (o', g', ʻ, ʼ) esa RFC 6266 kodlash bilan saqlanadi — aks holda
+    brauzer haqiqiy nomni o'qiy olmay "download.docx" deb qo'yib yuboradi."""
+    xavfsiz_nom = xavfsiz_fayl_nomi(fayl_nomi, sukut="hujjat.docx")
     response = HttpResponse(
         buffer.read(),
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    response["Content-Disposition"] = f'attachment; filename="{xavfsiz_nom or "hujjat.docx"}"'
+    response["Content-Disposition"] = content_disposition_header(xavfsiz_nom)
     return response
 
 
