@@ -67,7 +67,7 @@ class ArizaEksportTest(TestCase):
         self.user = User.objects.create_user(
             "bosh", password="p", first_name="Diyor", last_name="Atamirzayev"
         )
-        self.user.profil.tuman = "Andijon"
+        self.user.profil.tuman = "Andijon tuman"
         self.user.profil.tashkilot = tashkilot
         self.user.profil.save()
         self.client_ = Client()
@@ -161,6 +161,7 @@ class ReestrXatTest(TestCase):
             "r", password="p", first_name="Diyor", last_name="Atamirzayev"
         )
         self.user.profil.rol = XodimProfil.ROL_REESTR
+        self.user.profil.tuman = "Andijon tuman"
         self.user.profil.tashkilot = tashkilot
         self.user.profil.save()
         self.client_ = Client()
@@ -182,7 +183,7 @@ class ReestrXatTest(TestCase):
         self.assertTrue(self._saqlash().json()["success"])
         matn = self._eksport_matni()
         self.assertIn(
-            "Andijon tumani, Katta Guzar MFY, Anisiy ko'chasida yashovchi fuqaro "
+            "Andijon tuman, Katta Guzar MFY, Anisiy ko'chasida yashovchi fuqaro "
             "Atamirzayev Diyorga",
             matn,
         )
@@ -267,9 +268,16 @@ class ReestrXatTest(TestCase):
         self.assertContains(javob, "Reestr tizimi")
 
     @override_settings(REESTR_SHABLONLAR_DIR=Path("/bunday/papka/yoq"))
-    def test_shablon_topilmasa_kod_generatoriga_qaytadi(self):
+    def test_shablon_topilmasa_500_emas_xabar_beradi(self):
+        """Kod-asosidagi zaxira generator olib tashlangan — shablon fayli
+        topilmasa endi ShablonTopilmadi ko'tariladi, view uni ushlab
+        foydalanuvchiga tushunarli xabar bilan qaytaradi."""
         self._saqlash()
-        self.assertIn("32065423-ID", self._eksport_matni())
+        xat = Xat.objects.latest("id")
+        javob = self.client_.get(reverse("reestr:export", args=[xat.pk]), follow=True)
+        self.assertEqual(javob.status_code, 200)
+        xabarlar = [str(m) for m in javob.context["messages"]]
+        self.assertTrue(any("shablon" in x.lower() for x in xabarlar), xabarlar)
 
 
 class XizmatHujjatiTest(TestCase):
@@ -421,26 +429,53 @@ class TalabnomaTavsiyalariTest(TestCase):
             TASHKILOTLAR, barcha_yordamlar, tashkilot_nomlari, yordamlar_xaritasi,
         )
         self.assertTrue(TASHKILOTLAR)
-        nomlar = [t["nomi"] for t in TASHKILOTLAR]
-        self.assertEqual(len(nomlar), len(set(nomlar)), "tashkilot nomlari takrorlanmasin")
+        xom_nomlar = [t["nomi"] for t in TASHKILOTLAR]
+        self.assertEqual(len(xom_nomlar), len(set(xom_nomlar)), "tashkilot nomlari takrorlanmasin")
         for t in TASHKILOTLAR:
             with self.subTest(tashkilot=t["kod"]):
                 self.assertTrue(t["nomi"] and t["izoh"] and t["yordamlar"])
-        self.assertEqual(len(tashkilot_nomlari()), len(TASHKILOTLAR))
-        self.assertEqual(set(yordamlar_xaritasi()), set(nomlar))
+
+        # "{tuman}" placeholderi haqiqiy qiymatga (yoki sukut "Andijon tuman"ga)
+        # almashtirilgandan keyingi nomlar bilan solishtiramiz.
+        toldirilgan = [nomi for nomi, _izoh in tashkilot_nomlari("Farg'ona tuman")]
+        self.assertEqual(len(toldirilgan), len(TASHKILOTLAR))
+        self.assertEqual(len(toldirilgan), len(set(toldirilgan)), "to'ldirilgan nomlar ham takrorlanmasin")
+        self.assertTrue(any("Farg'ona tuman" in nomi for nomi in toldirilgan))
+        self.assertEqual(set(yordamlar_xaritasi("Farg'ona tuman")), set(toldirilgan))
+
         hammasi = barcha_yordamlar()
         self.assertEqual(len(hammasi), len(set(hammasi)), "yordamlar takrorlanmasin")
 
     def test_dashboardda_tavsiyalar_bor(self):
-        from core.talabnoma import TASHKILOTLAR
+        from core.talabnoma import tashkilot_nomlari
+        # self.user.profil.tuman bo'sh — sukut "Andijon tuman" ishlatiladi (talabnoma.py
+        # dagi _nomi_toldirilgan()).
+        birinchi_nomi = tashkilot_nomlari()[0][0]
+
         javob = self.client_.get(reverse("core:dashboard"))
         self.assertContains(javob, 'id="talabnomaTashkilotlari"')
         self.assertContains(javob, 'id="talabnomaYordamlari"')
         self.assertContains(javob, 'id="talabnoma-data"')
-        self.assertContains(javob, TASHKILOTLAR[0]["nomi"])
+        self.assertContains(javob, birinchi_nomi)
+        self.assertContains(javob, "Andijon tuman")
+        self.assertNotContains(javob, "{tuman}")
         # Xarita JSON sifatida sahifada bo'lishi kerak
         xarita = json.loads(javob.context["talabnoma_xaritasi_json"])
-        self.assertIn(TASHKILOTLAR[0]["nomi"], xarita)
+        self.assertIn(birinchi_nomi, xarita)
+
+    def test_tuman_bolsa_shunga_moslashadi(self):
+        """Xodim profilida tuman bo'lsa, tavsiyalar o'sha tumanga moslanadi.
+
+        Sahifaning o'zida ("Murojaat tashkiloti" ro'yxati kabi) boshqa, talabnomaga
+        aloqasi yo'q joylarda ham "Andijon tuman" so'zi uchrashi mumkin — shuning uchun
+        butun sahifa emas, faqat talabnoma XARITASI tekshiriladi."""
+        self.user.profil.tuman = "Namangan tuman"
+        self.user.profil.save()
+        javob = self.client_.get(reverse("core:dashboard"))
+        xarita = json.loads(javob.context["talabnoma_xaritasi_json"])
+        nomlar = list(xarita)
+        self.assertTrue(any("Namangan tuman" in n_ for n_ in nomlar))
+        self.assertFalse(any("Andijon tuman" in n_ for n_ in nomlar))
 
     def test_tavsiyadan_tashqari_matn_ham_saqlanadi(self):
         """Ro'yxat majburiy emas — erkin matn ham qabul qilinishi kerak."""
@@ -529,13 +564,24 @@ class XatoliklargaChidamlilikTest(TestCase):
         self.assertEqual(ariza.fio, "Murojaat Etuvchi")
         self.assertEqual(ariza.mfy, "Katta Guzar")
 
-    def test_xato_sahifasi_ozbekcha(self):
-        from config.xatolar import MATNLAR
+    def test_404_sahifasi_ozbekcha(self):
         from django.test import RequestFactory
         from config.xatolar import xato_404
         javob = xato_404(RequestFactory().get("/yoq/"))
         self.assertEqual(javob.status_code, 404)
-        self.assertIn(MATNLAR[404][0], javob.content.decode())
+        self.assertIn("Adashib qoldingiz", javob.content.decode())
+
+    def test_boshqa_xato_sahifalari_ozbekcha(self):
+        from django.template.defaultfilters import escape
+        from django.test import RequestFactory
+        from config.xatolar import MATNLAR, xato_400, xato_403, xato_500
+        for kod, funksiya in ((400, xato_400), (403, xato_403), (500, xato_500)):
+            with self.subTest(kod=kod):
+                javob = funksiya(RequestFactory().get("/yoq/"))
+                self.assertEqual(javob.status_code, kod)
+                # render() shablon orqali chiqadi, apostrof "&#x27;" bo'lib
+                # HTML-escape qilinadi — shu ko'rinishda tekshiramiz.
+                self.assertIn(escape(MATNLAR[kod][0]), javob.content.decode())
 
 
 class SahifalarOchiladiTest(TestCase):
@@ -674,7 +720,7 @@ class KollegalQarorTest(TestCase):
 
 class RadXulosaTest(TestCase):
     """Har bir rad sababi "... sizga <dastur> tayinlash rad etildi." bilan
-    tugashi va shablon/kod/ko'rinish uchalasi bir xil bo'lishi."""
+    tugashi va shablon/ko'rinish ikkalasi bir xil bo'lishi."""
 
     MAQSAD = "oziq-ovqat xarajatlarini qoplash"
     SABABLAR = {
@@ -688,7 +734,7 @@ class RadXulosaTest(TestCase):
 
     def _xat(self, **rad):
         return {
-            "template": "rad", "fio": "Test Fuqaro", "mfyNomi": "Mart",
+            "template": "rad", "tuman": "Andijon tuman", "fio": "Test Fuqaro", "mfyNomi": "Mart",
             "street": "Anisiy", "murojaatfrom": "Ishonch", "murojaatRaqami": "1/26",
             "murojaatVaqti": "2026-07-16", "arizaMaqsadi": self.MAQSAD,
             "arizaVaqti": "2026-06-03", "arizaID": "32065423", "isQayta": True,
@@ -715,16 +761,16 @@ class RadXulosaTest(TestCase):
                 )
                 self.assertNotIn("sababli sababli", matn)
 
-    def test_shablon_kod_va_korinish_bir_xil(self):
+    def test_shablon_va_korinish_bir_xil(self):
+        """Brauzerdagi preview (letter_text.py) .docx bilan bir xil matn
+        ko'rsatishi shart — ikkalasi ham bitta manba (docx_generator.py
+        dagi konstanta/segmentlar) dan foydalanadi."""
         import re as _re
-        from reestr import docx_generator as dg
         from reestr.docx_templates import render_letter
         from reestr.letter_text import build_preview
 
         data = self._xat(**self.SABABLAR)
-        kod = docx_matni(dg.build_letter_document(data).read())
         shablon = docx_matni(render_letter(data).read())
-        self.assertEqual(kod, shablon, "shablon va kod generatori farq qilmasin")
 
         _, _, paras, _ = build_preview(data)
         for p in paras:
@@ -732,6 +778,30 @@ class RadXulosaTest(TestCase):
                     .replace("&quot;", '"').replace("&amp;", "&"))
             self.assertIn(toza, shablon.replace("\n", " ") + shablon,
                           f"ko'rinishdagi abzats .docx da yo'q: {toza[:80]}")
+
+    def test_tuman_userdan_olinadi(self):
+        """Hujjat boshidagi qabul qiluvchi bloki endi qattiq yozilgan
+        "Andijon" emas, xodimning tuman qiymatidan olinadi. Qiymatning o'zi
+        allaqachon "...tuman" so'zini o'z ichiga oladi (masalan "Farg'ona tuman"),
+        shuning uchun ustiga yana " tuman"/" tumani" QO'SHILMASLIGI kerak."""
+        from reestr.docx_templates import render_letter
+        from reestr.letter_text import build_preview
+
+        data = self._xat(**self.SABABLAR)
+        data["tuman"] = "Farg'ona tuman"
+        matn = docx_matni(render_letter(data).read())
+        birinchi_qator = matn.split("\n")[0]
+        self.assertEqual(
+            birinchi_qator,
+            "Farg'ona tuman, Mart MFY, Anisiy ko'chasida yashovchi fuqaro Test Fuqaroga",
+        )
+        self.assertNotIn("Andijon tuman,", matn)
+
+        pochta_html, _murojaat, _paras, _ = build_preview(data)
+        # _p() Django escape() orqali HTML-ga o'giradi, apostrof "&#x27;" bo'lib
+        # chiqadi — bu haqiqiy brauzer chiqishi, shuning uchun aynan shu ko'rinishda
+        # tekshiramiz.
+        self.assertIn("Farg&#x27;ona tuman", pochta_html)
 
     def test_daromad_jumlasi_ikki_nuqtasiz(self):
         """income_text() nuqtasiz tugaydi — ortidan xulosa ulanadi."""

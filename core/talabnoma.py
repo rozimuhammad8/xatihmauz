@@ -29,7 +29,7 @@ tomonidan o'z vakolatlari doirasida BAJARILISHI MAJBURIY.
 TASHKILOTLAR = [
     {
         "kod": "bandlik",
-        "nomi": "Andijon tuman kambag'allikni qisqartirish va bandlik bo'limi",
+        "nomi": "{tuman} kambag'allikni qisqartirish va bandlik bo'limi",
         "izoh": "Bandlik, kasb-hunar, tadbirkorlik",
         "yordamlar": [
             "Mahalla xokim yordamchisiga daromad manbai va bandlikni ta'minlash uchun yo'naltirish",
@@ -42,7 +42,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "tibbiyot",
-        "nomi": "Andijon tuman tibbiyot birlashmasi",
+        "nomi": "{tuman} tibbiyot birlashmasi",
         "izoh": "Tibbiy ko'rik, davolanish, dori-darmon",
         "yordamlar": [
             "Chuqurlashtirilgan tibbiy ko'rikdan o'tkazish",
@@ -55,7 +55,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "xalq_talimi",
-        "nomi": "Andijon tuman xalq ta'limi bo'limi",
+        "nomi": "{tuman} xalq ta'limi bo'limi",
         "izoh": "Maktab, o'quv qurollari",
         "yordamlar": [
             "Bolani umumta'lim maktabiga joylashtirish",
@@ -66,7 +66,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "maktabgacha",
-        "nomi": "Andijon tuman maktabgacha va maktab ta'limi bo'limi",
+        "nomi": "{tuman} maktabgacha va maktab ta'limi bo'limi",
         "izoh": "Bog'cha, maktabgacha ta'lim",
         "yordamlar": [
             "Bolani maktabgacha ta'lim muassasasiga navbatsiz joylashtirish",
@@ -75,7 +75,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "hokimlik",
-        "nomi": "Andijon tuman hokimligi",
+        "nomi": "{tuman} hokimligi",
         "izoh": "Uy-joy, kommunal, moddiy yordam",
         "yordamlar": [
             "Uy-joy sharoitini yaxshilash bo'yicha ko'mak ko'rsatish",
@@ -98,7 +98,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "pensiya",
-        "nomi": "Andijon tuman pensiya jamg'armasi bo'limi",
+        "nomi": "{tuman} pensiya jamg'armasi bo'limi",
         "izoh": "Pensiya va nafaqa",
         "yordamlar": [
             "Pensiya tayinlash uchun hujjatlarni rasmiylashtirish",
@@ -109,7 +109,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "iib",
-        "nomi": "Andijon tuman ichki ishlar bo'limi",
+        "nomi": "{tuman} ichki ishlar bo'limi",
         "izoh": "Hujjat, ro'yxat, profilaktika",
         "yordamlar": [
             "Biometrik pasport rasmiylashtirishda ko'mak berish",
@@ -119,7 +119,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "davlat_xizmatlari",
-        "nomi": "Andijon tuman davlat xizmatlari markazi",
+        "nomi": "{tuman} davlat xizmatlari markazi",
         "izoh": "Hujjatlarni rasmiylashtirish",
         "yordamlar": [
             "Zarur hujjatlarni navbatsiz rasmiylashtirish",
@@ -129,7 +129,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "kadastr",
-        "nomi": "Andijon tuman kadastr bo'limi",
+        "nomi": "{tuman} kadastr bo'limi",
         "izoh": "Mulk hujjatlari",
         "yordamlar": [
             "Uy-joyni kadastr hisobiga olish",
@@ -138,7 +138,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "xotin_qizlar",
-        "nomi": "Andijon tuman xotin-qizlar qo'mitasi",
+        "nomi": "{tuman} xotin-qizlar qo'mitasi",
         "izoh": "Ayollar bilan ishlash",
         "yordamlar": [
             "\"Ayollar daftari\" ro'yxatiga kiritish",
@@ -148,7 +148,7 @@ TASHKILOTLAR = [
     },
     {
         "kod": "yoshlar",
-        "nomi": "Andijon tuman yoshlar ishlari agentligi bo'limi",
+        "nomi": "{tuman} yoshlar ishlari agentligi bo'limi",
         "izoh": "Yoshlar bilan ishlash",
         "yordamlar": [
             "\"Yoshlar daftari\" ro'yxatiga kiritish",
@@ -170,15 +170,25 @@ TASHKILOTLAR = [
 ]
 
 
-def tashkilot_nomlari():
-    """(nomi, izoh) juftliklari — <datalist> uchun."""
-    return [(t["nomi"], t["izoh"]) for t in TASHKILOTLAR]
+# Ba'zi yozuvlar "{tuman}" placeholderi bilan ("{tuman} hokimligi" kabi) —
+# bu XodimProfil.tuman qiymati bilan almashtiriladi (masalan "Andijon tuman"),
+# shu orqali boshqa tumandagi xodimga o'z tumanidagi idora nomi taklif
+# qilinadi. Placeholder bo'lmagan yozuvlar (mahalla, viloyat darajasidagi
+# protez-ortopediya markazi) o'zgarishsiz qoladi.
+def _nomi_toldirilgan(tashkilot, tuman):
+    return tashkilot["nomi"].replace("{tuman}", tuman or "Andijon tuman")
 
 
-def yordamlar_xaritasi():
+def tashkilot_nomlari(tuman=""):
+    """(nomi, izoh) juftliklari — <datalist> uchun. `tuman` — so'rov
+    yuborayotgan xodimning XodimProfil.tuman qiymati."""
+    return [(_nomi_toldirilgan(t, tuman), t["izoh"]) for t in TASHKILOTLAR]
+
+
+def yordamlar_xaritasi(tuman=""):
     """{tashkilot nomi: [yordam turlari]} — tanlangan tashkilotga qarab
     yordam ro'yxatini filtrlash uchun (JSON sifatida sahifaga beriladi)."""
-    return {t["nomi"]: t["yordamlar"] for t in TASHKILOTLAR}
+    return {_nomi_toldirilgan(t, tuman): t["yordamlar"] for t in TASHKILOTLAR}
 
 
 def barcha_yordamlar():

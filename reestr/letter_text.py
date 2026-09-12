@@ -30,13 +30,14 @@ def _p(segments):
 
 def rad_paragraphs(data):
     rad = data.get("radSabablari") or {}
+    tuman = data.get("tuman") or ""
     paras = [
-        _p([(dg.INTRO_PARAGRAPH, {})]),
+        _p([(dg.INTRO_PARAGRAPH.replace("{tuman}", tuman), {})]),
         _p([
             ("Sizga ", {}), (data.get("mfyNomi", ""), {"bold": True}),
             (" MFY mahallada kompleks xizmat ko'rsatuvchi xodim, O‘zbekiston Respublikasi "
              "Prezidenti huzuridagi Ijtimoiy himoya milliy Agentligi Andijon viloyati boshqarmasi "
-             "Andijon tumani “Inson” ijtimoiy xizmatlar markazi faoliyati, hamda xizmat "
+             f"{tuman} “Inson” ijtimoiy xizmatlar markazi faoliyati, hamda xizmat "
              "turlarini yaqindan tanishtirildi.", {}),
         ]),
         _p(dg.NIZOM_FAMILY_REGISTRY_PARAGRAPH),
@@ -99,7 +100,7 @@ def rad_paragraphs(data):
 def tasdiqlandi_paragraphs(data):
     tasdiq = data.get("tasdiqMalumotlari") or {}
     paras = [
-        _p([(dg.INTRO_PARAGRAPH, {})]),
+        _p([(dg.INTRO_PARAGRAPH.replace("{tuman}", data.get("tuman") or ""), {})]),
         _p(dg.NIZOM_INTRO_SEGMENTS + [(" bilan tasdiqlangan Nizomning 33-bandiga muvofiq quyidagilar ma’lum qilinadi.", {})]),
         _p(dg.AGAR_PARAGRAPH_SEGMENTS),
     ]
@@ -134,7 +135,7 @@ def tasdiqlandi_paragraphs(data):
 
 def tayinlandi_paragraphs(data):
     paras = [
-        _p([(dg.INTRO_PARAGRAPH, {})]),
+        _p([(dg.INTRO_PARAGRAPH.replace("{tuman}", data.get("tuman") or ""), {})]),
         _p(dg.NIZOM_INTRO_SEGMENTS + [(" bilan tasdiqlangan Nizomning 33-bandiga muvofiq quyidagilar ma’lum qilinadi.", {})]),
         _p(dg.AGAR_PARAGRAPH_SEGMENTS),
     ]
@@ -156,12 +157,13 @@ def tayinlandi_paragraphs(data):
 
 
 def muddat_paragraphs(data):
+    tuman = data.get("tuman") or ""
     paras = [
         _p([
             ("O‘zbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy agentligi "
-             "Andijon viloyati Andijon tuman “Inson” ijtimoiy xizmatlar markazi ", {}),
+             f"Andijon viloyati {tuman} “Inson” ijtimoiy xizmatlar markazi ", {}),
             (data.get("murojaatRaqami", ""), {"bold": True}),
-            ("-raqamli murojaatingiz yuzasidan Andijon tuman “Inson” ijtimoiy xizmatlar "
+            (f"-raqamli murojaatingiz yuzasidan {tuman} “Inson” ijtimoiy xizmatlar "
              "markazi quyidagilar ma’lum qilinadi.", {}),
         ]),
         _p([(
@@ -219,11 +221,12 @@ TEMPLATES_WITH_SIGNATURE = {"rad", "tasdiqlandi", "tayinlandi", "muddat", "ariza
 
 def build_preview(data):
     """(pochta_html, murojaat_html, [abzats_html...], has_signature) qaytaradi."""
+    tuman = data.get("tuman") or ""
     mfy = data.get("mfyNomi") or ""
     street = data.get("street") or ""
     fio = data.get("fio") or ""
     pochta_html = _p([
-        ("Andijon tumani, ", {"bold": True}), (mfy, {"bold": True}), (" MFY, ", {"bold": True}),
+        (tuman, {"bold": True}), (", ", {"bold": True}), (mfy, {"bold": True}), (" MFY, ", {"bold": True}),
         (street, {"bold": True}), (" ko'chasida yashovchi fuqaro ", {"bold": True}),
         (fio, {"bold": True}), ("ga", {"bold": True}),
     ])

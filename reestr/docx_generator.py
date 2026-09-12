@@ -1,14 +1,17 @@
 # ============================================================
-# WORD (.docx) XAT GENERATORI
+# XAT MATNI VA FORMATLASH YORDAMCHILARI
 # ------------------------------------------------------------
-# "exmple/" papkasidagi rasmiy shablonlar (AVTO_NORASMIY,
-# Tasdiqlandi SHABLON, Tayinlandi SHABLON, Muddat so'rash SHABLON,
-# RASMIY/NORASMIY DAROMAD, Uyda Bolmagan va h.k.) asosida, har bir
-# xat yozuvi (letter) uchun bir xil dizayn/formatda to'ldirilgan
-# rasmiy Word hujjati yaratadi.
+# Xat butun holda bu yerda QURILMAYDI — u Shablons/reeystr/*.docx
+# fayllaridan o'qiladi (qarang: docx_templates.py). Bu modulda faqat:
+#   * matn/son formatlash (split_date, format_money, car_segments, ...)
+#   * shablonlarni yasaydigan buyruq uchun quruvchi bloklar
+#     (new_document, add_paragraph, add_recipient_block, ...) — ular
+#     shablon_qurish.py da ishlatiladi ("python manage.py reestr_shablon")
+#   * huquqiy matn konstantalari (INTRO_PARAGRAPH, NIZOM_*, APPEAL_PARAGRAPH)
+#     — letter_text.py (brauzer ko'rinishi) ham aynan shu matnlarni
+#     qayta ishlatadi, shu sababli .docx va sayt hech qachon farq qilmaydi.
 # ============================================================
 
-import io
 import re
 
 from docx import Document
@@ -314,11 +317,17 @@ def body_paragraph(doc, segments):
     )
 
 
-def add_recipient_block(doc, mfy, street, fio):
+def add_recipient_block(doc, tuman, mfy, street, fio):
+    """`tuman` — xatni tayyorlagan xodimning tuman (XodimProfil.tuman)
+    qiymati. Qiymatning o'zi allaqachon "Andijon tuman" kabi to'liq so'z
+    birikmasi (xodim shunday kiritadi) — shuning uchun bu yerda qo'shimcha
+    " tuman"/" tumani" so'zi QO'SHILMAYDI, avval "Andijon tumani" deb
+    qattiq yozib qo'yilgan edi."""
     add_paragraph(
         doc,
         [
-            ("Andijon tumani, ", {'bold': True}),
+            (tuman or '', {'bold': True}),
+            (", ", {'bold': True}),
             (mfy or '', {'bold': True}),
             (" MFY, ", {'bold': True}),
             (street or '', {'bold': True}),
@@ -372,9 +381,17 @@ def add_signature_block(doc, data):
     add_paragraph(doc, [(f"Ijrochi: {ijrochi}", {'bold': True, 'italic': True, 'size': 9})])
 
 
+# "{tuman}" — bu yerda ham LITERAL placeholder matni sifatida saqlanadi
+# (haqiqiy qiymat emas): shablon_qurish.py buni .docx shabloniga o'sha
+# ko'rinishda ko'chiradi, keyin render_letter() umumiy almashtirish
+# mexanizmi orqali xodimning tuman qiymati bilan to'ldiradi (qarang:
+# docx_templates._oddiy_almashtirishlar). Brauzer ko'rinishi (letter_text.py)
+# esa buni o'zi .replace("{tuman}", ...) qiladi, chunki u .docx orqali
+# o'tmaydi. "Andijon viloyati" statik qoladi — bu ilova hozircha faqat
+# Andijon viloyati doirasidagi tumanlarga xizmat qiladi.
 INTRO_PARAGRAPH = (
     "O‘zbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy Agentligi "
-    "Andijon viloyati boshqarmasi Andijon tumani “Inson” ijtimoiy xizmatlar markazi "
+    "Andijon viloyati boshqarmasi {tuman} “Inson” ijtimoiy xizmatlar markazi "
     "tomonidan murojaatingiz o‘rganib chiqildi."
 )
 
@@ -441,280 +458,10 @@ BANK_PARAGRAPH_SEGMENTS = [
 ]
 
 
-# ------------------------------------------------------------
-# 1) RAD ETISH XATI
-# ------------------------------------------------------------
-def build_rad(doc, data):
-    rad = data.get('radSabablari') or {}
-
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, [(INTRO_PARAGRAPH, {})])
-    body_paragraph(doc, [
-        ("Sizga ", {}),
-        (data.get('mfyNomi', ''), {'bold': True}),
-        (
-            " MFY mahallada kompleks xizmat ko'rsatuvchi xodim, O‘zbekiston Respublikasi "
-            "Prezidenti huzuridagi Ijtimoiy himoya milliy Agentligi Andijon viloyati boshqarmasi "
-            "Andijon tumani “Inson” ijtimoiy xizmatlar markazi faoliyati, hamda xizmat "
-            "turlarini yaqindan tanishtirildi.",
-            {},
-        ),
-    ])
-    body_paragraph(doc, NIZOM_FAMILY_REGISTRY_PARAGRAPH)
-
-    ariza_year, ariza_day, ariza_month = split_date(data.get('arizaVaqti'))
-    qayta = 'qayta ' if data.get('isQayta') else ''
-    body_paragraph(doc, [
-        ("Nizom talabalariga asosan sizning ", {}),
-        (data.get('arizaMaqsadi', ''), {'bold': True}),
-        (" uchun berilgan ", {}),
-        (f"{ariza_year}-yil {ariza_day}-{ariza_month}", {'bold': True}),
-        (" kungi arizangiz va unga ilova qilingan ma’lumotlari «Ijtimoiy himoya yagona reyestri» axborot tizimiga ", {}),
-        (f"{data.get('arizaID', '')}-ID", {'bold': True}),
-        (" raqam bilan kiritilgan va dastur tomonidan ", {}),
-        (qayta, {}),
-        ("o'rganilganda quydagilar sababli rad etildi:", {}),
-    ])
-
-    if rad.get('avtoRad'):
-        body_paragraph(doc, [("Sizning oilangiz foydalanuvida bo'lgan ", {})] +
-                       car_segments(rad['avtoRad']) + [(" mavjudligi sababli", {})] +
-                       rad_xulosa_segments(data) +
-                       [asos_segment("(Asos: VM 35-son qarori 4-bob v-band.)")])
-
-    if rad.get('uyRad'):
-        body_paragraph(
-            doc,
-            [(f"Sizning oilangiz nomiga rasmiylashtirilgan {len(rad['uyRad'])} ta ko'chmas mulk (", {})] +
-            uy_segments(rad['uyRad']) + [(") mavjudligi sababli", {})] +
-            rad_xulosa_segments(data) +
-            [asos_segment("(Asos: VM 35-son qarori 4-bob b-band.)")],
-        )
-
-    if rad.get('rasmiyRad'):
-        body_paragraph(doc, [
-            (income_text(rad['rasmiyRad']), {}),
-            (" sababli", {}),
-        ] + rad_xulosa_segments(data) + [
-            asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
-        ])
-
-    if rad.get('norasmiyRad'):
-        body_paragraph(doc, [
-            ("O'rganish natijasida ", {}),
-            ("“mahalla yettiligi”", {'bold': True}),
-            (
-                " tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
-                "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
-                "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli",
-                {},
-            ),
-        ] + rad_xulosa_segments(data) + [
-            asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),
-        ])
-
-    if rad.get('uydaEmasRad'):
-        body_paragraph(doc, [(
-            "Ijtimoiy xodim tomonidan yashash sharoitini o'rganish maqsadida amalga oshirilgan "
-            "tashrif davomida sizni yashash manzilida mavjud bo'lmaganligi sababli ijtimoiy "
-            "holatini o'rganish imkoni bo'lmadi. Natijada murojaat bo'yicha zarur o'rganish "
-            "yakunlanmaganligi sababli",
-            {},
-        )] + rad_xulosa_segments(data))
-
-    body_paragraph(doc, [(APPEAL_PARAGRAPH, {})])
-    add_signature_block(doc, data)
-
-
-# ------------------------------------------------------------
-# 2) TASDIQLASH XATI (template == 'tasdiqlandi')
-# ------------------------------------------------------------
-def build_tasdiqlandi(doc, data):
-    tasdiq = data.get('tasdiqMalumotlari') or {}
-
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, [(INTRO_PARAGRAPH, {})])
-    body_paragraph(doc, NIZOM_INTRO_SEGMENTS + [
-        (" bilan tasdiqlangan Nizomning 33-bandiga muvofiq quyidagilar ma’lum qilinadi.", {}),
-    ])
-    body_paragraph(doc, AGAR_PARAGRAPH_SEGMENTS)
-
-    ariza_year, ariza_day, ariza_month = split_date(data.get('arizaVaqti'))
-    tasdiq_year, tasdiq_month = parse_year_month(tasdiq.get('tasdiqSanasi'))
-    tolov_year, tolov_month = parse_year_month(tasdiq.get('tolovSanasi'))
-    davr_oy = f"{tasdiq_year}-yil {tasdiq_month}" if tasdiq_month else f"{ariza_year}-yil {ariza_month}"
-
-    body_paragraph(doc, [
-        (data.get('fio', ''), {'bold': True}),
-        (" sizning ", {}),
-        (f"{ariza_year}-yil {ariza_day}-{ariza_month}", {'bold': True}),
-        (" kunidan ", {}),
-        (data.get('arizaMaqsadi', ''), {'bold': True}),
-        (" tayinlash bo'yicha yuborgan arizangiz «Ijtimoiy himoya yagona reestri» axborot tizimiga ", {}),
-        (f"{data.get('arizaID', '')}-ID", {'bold': True}),
-        (" raqam bilan kiritilgan va ", {}),
-        (f"{davr_oy}", {'bold': True}),
-        (" oyidan ", {}),
-        (data.get('arizaMaqsadi', ''), {'bold': True}),
-        (" tayinlangan hamda Kambag'al oila toifasiga kiritilgan.", {}),
-    ])
-
-    if tasdiq.get('tolovSum') or tasdiq.get('hisobRaqami'):
-        davr_tolov = f"{tolov_year}-yil {tolov_month} oyi" if tolov_month else (f"{davr_oy} oyi" if davr_oy else "tegishli davr")
-        body_paragraph(doc, [
-            ("Sizga ", {}),
-            (davr_tolov, {}),
-            (" uchun ", {}),
-            (tasdiq.get('hisobRaqami', ''), {}),
-            (" hisob raqamiga ", {}),
-            (f"{format_money(tasdiq.get('tolovSum'))}", {}),
-            (" so'm to'lab berilganligini ma’lum qilamiz.", {}),
-        ])
-
-    body_paragraph(doc, BANK_PARAGRAPH_SEGMENTS)
-    body_paragraph(doc, [(APPEAL_PARAGRAPH, {})])
-    add_signature_block(doc, data)
-
-
-# ------------------------------------------------------------
-# 3) TAYINLASH XATI (template == 'tayinlandi')
-# ------------------------------------------------------------
-def build_tayinlandi(doc, data):
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, [(INTRO_PARAGRAPH, {})])
-    body_paragraph(doc, NIZOM_INTRO_SEGMENTS + [
-        (" bilan tasdiqlangan Nizomning 33-bandiga muvofiq quyidagilar ma’lum qilinadi.", {}),
-    ])
-    body_paragraph(doc, AGAR_PARAGRAPH_SEGMENTS)
-
-    ariza_year, ariza_day, ariza_month = split_date(data.get('arizaVaqti'))
-    body_paragraph(doc, [
-        (data.get('fio', ''), {'bold': True}),
-        (" sizning ", {}),
-        (f"{ariza_year}-yil {ariza_day}-{ariza_month}", {'bold': True}),
-        (" kuni yuborgan ", {}),
-        (data.get('arizaMaqsadi', ''), {'bold': True}),
-        (" tayinlash bo'yicha yuborgan arizangiz «Ijtimoiy himoya yagona reestri» axborot tizimiga ", {}),
-        (f"{data.get('arizaID', '')}-ID", {'bold': True}),
-        (" raqam bilan kiritilgan va ", {}),
-        (data.get('arizaMaqsadi', ''), {'bold': True}),
-        (" tayinlangan hamda Kambag'al oila toifasiga kiritilgan.", {}),
-    ])
-
-    if data.get('tayinlashQoshimcha'):
-        body_paragraph(doc, [(data.get('tayinlashQoshimcha'), {})])
-
-    body_paragraph(doc, BANK_PARAGRAPH_SEGMENTS)
-    body_paragraph(doc, [(APPEAL_PARAGRAPH, {})])
-    add_signature_block(doc, data)
-
-
-# ------------------------------------------------------------
-# 4) MUDDAT SO'RASH XATI (template == 'muddat')
-# ------------------------------------------------------------
-def build_muddat(doc, data):
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, [
-        (
-            "O‘zbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy agentligi "
-            "Andijon viloyati Andijon tuman “Inson” ijtimoiy xizmatlar markazi ",
-            {},
-        ),
-        (data.get('murojaatRaqami', ''), {'bold': True}),
-        (
-            "-raqamli murojaatingiz yuzasidan Andijon tuman “Inson” ijtimoiy xizmatlar "
-            "markazi quyidagilar ma’lum qilinadi.",
-            {},
-        ),
-    ])
-    body_paragraph(doc, [(
-        "Mazkur murojaatingiz bo‘yicha qo‘shimcha o‘rganish talab etilayotganligi "
-        "sababli, O‘zbekiston Respublikasi “Jismoniy va yuridik shaxslarning murojaatlari "
-        "to‘g‘risida”gi O‘RQ-445-son Qonunning 28-moddasiga muvofiq murojaatni "
-        "ko‘rib chiqish muddati uzaytirilganligini bildiramiz.",
-        {},
-    )])
-
-    if data.get('qoshimchaMalumot'):
-        body_paragraph(doc, [(data.get('qoshimchaMalumot'), {})])
-
-    add_signature_block(doc, data)
-
-
-# ------------------------------------------------------------
-# 5) ARIZA KIRITILMAGAN XATI (template == 'arizaKiritilmagan')
-# Butunlay statik matn (exmple/"Ariza kiritlmaganga namuna.docx" asosida) —
-# faqat qabul qiluvchi va murojaat bloklari ma'lumotga bog'liq, xat matnining
-# o'zida "ariza"ga oid hech narsa yo'q (chunki ariza umuman kiritilmagan).
-# ------------------------------------------------------------
-ARIZA_KIRITILMAGAN_INTRO = (
-    "Murojaatingiz, Andijon tumani “Inson” ijtimoiy xizmatlar markazi xodimlari "
-    "tomonidan o‘rganildi. O‘rganish davomida, Sizga O‘zbekiston Respublikasi "
-    "Vazirlar Mahkamasining 2026 yil 29 yanvardagi “Ijtimoiy reestrni yuritish tartibi "
-    "to‘g‘risida”gi 35-son qarori bilan tasdiqlangan Nizomning 1-ilova 2-bobida "
-    "Oilani Reyestrga kiritish to‘g‘risidagi murojaatni ko‘rib chiqish tartibi "
-    "belgilanganligi tushuntirildi."
-)
-
-ARIZA_KIRITILMAGAN_FORM_INTRO = (
-    "Ushbu nizomning 5-bandiga asosan Ariza beruvchi oilasini Reyestrga kiritish "
-    "uchun vakolatli organga quyidagi shakllarda murojaat qiladi:"
-)
-
-ARIZA_KIRITILMAGAN_FORM_1 = (
-    "davlat xizmatlari markazi yoki vakolatli organga borgan holda yoki yashash "
-    "manzili bo‘yicha mahallaga biriktirilgan ijtimoiy xodim orqali;"
-)
-
-ARIZA_KIRITILMAGAN_FORM_2 = (
-    "“YAMIH” AT, Yagona interaktiv davlat xizmatlari portali (keyingi o‘rinlarda "
-    "— YIDXP) yoki “Ijtimoiy karta” mobil ilovasi orqali mustaqil ravishda."
-)
-
-ARIZA_KIRITILMAGAN_MONTHLY_LIMIT = (
-    "Har bir oila tomonidan Reyestrga kiritish uchun ariza topshirish bir oyda bir "
-    "marta amalga oshirishligi belgilangan."
-)
-
-ARIZA_KIRITILMAGAN_CONCLUSION = (
-    "Yuqoridagilardan kelib chiqqan holda Siz kam ta’minlangan oilalarga bolalar "
-    "nafaqasi yoki moddiy yordam tayinlashni so‘rab murojaat qilmaganligingizni "
-    "ma’lum qiladi."
-)
-
-# APPEAL_PARAGRAPH bilan bir xil ma'noda, lekin so'zma-so'z farqli variant —
-# "arizaKiritilmagan" va "arizaKiritilgan" namunalarida aynan shu ibora
-# ishlatilgan, shu sabab ikkalasida ham qayta ishlatiladi.
-SHIKOYAT_APPEAL_PARAGRAPH = (
-    "Murojaatingiz yuzasidan qabul qilingan qarordan qoniqish hosil qilmagan "
-    "taqdiringizda O‘zbekiston Respublikasining “Jismoniy va yuridik shaxslarning "
-    "murojaatlari to‘g‘risida”gi Qonuniga ko‘ra yuqori turuvchi tashkilotga shikoyat "
-    "qilishingiz mumkinligi haqida ogohlantirib o‘taman."
-)
-
-
-def build_ariza_kiritilmagan(doc, data):
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_INTRO, {})])
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_FORM_INTRO, {})])
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_FORM_1, {})])
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_FORM_2, {})])
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_MONTHLY_LIMIT, {})])
-    body_paragraph(doc, [(ARIZA_KIRITILMAGAN_CONCLUSION, {})])
-    body_paragraph(doc, [(SHIKOYAT_APPEAL_PARAGRAPH, {})])
-
-    add_signature_block(doc, data)
-
+# "arizaKiritilmagan" shabloni (Ariza kiritilmagan xati) TEMPLATE_CHOICES'da
+# yo'q — hech qachon ishlatilmagan, shuning uchun kod-asosidagi quruvchisi ham
+# olib tashlangan. Matni tarixiy sabablarga ko'ra letter_text.py da qolgan
+# (ariza_kiritilmagan_paragraphs), lekin PARAGRAPH_BUILDERS orqali chaqirilmaydi.
 
 # ------------------------------------------------------------
 # 6) ARIZA KIRITILGAN XATI (template == 'arizaKiritilgan')
@@ -748,56 +495,16 @@ ARIZA_KIRITILGAN_NIZOM_CLAUSE = [
 ]
 
 
-def build_ariza_kiritilgan(doc, data):
-    add_recipient_block(doc, data.get('mfyNomi'), data.get('street'), data.get('fio'))
-    add_murojaat_line(doc, data)
-
-    body_paragraph(doc, NIZOM_FAMILY_REGISTRY_PARAGRAPH)
-    body_paragraph(doc, ARIZA_KIRITILGAN_NIZOM_CLAUSE)
-
-    ariza_year, ariza_day, ariza_month = split_date(data.get('arizaVaqti'))
-    body_paragraph(doc, [
-        ("Yuqoridagi qaror talablariga asosan, Sizning ", {}),
-        (f"{ariza_year}-yil {ariza_day}-{ariza_month} kuni", {'bold': True}),
-        (" ", {}),
-        (f"{data.get('arizaMaqsadi', '')} olish uchun topshirgan arizangiz belgilangan tartibda ", {}),
-        ("“Ijtimoiy himoya yagona reyestri” ", {'bold': True}),
-        ("AT dasturida ", {}),
-        (f"ID-{data.get('arizaID', '')}", {'bold': True}),
-        (" bilan ro‘yxatga olinganligini ma’lum qilamiz.", {}),
-    ])
-
-    body_paragraph(doc, [(SHIKOYAT_APPEAL_PARAGRAPH, {})])
-    # Namunada imzo bloki yo'q (ataylab) — add_signature_block() bu yerda
-    # chaqirilmaydi.
-
-
-TEMPLATE_BUILDERS = {
-    'rad': build_rad,
-    'tasdiqlandi': build_tasdiqlandi,
-    'tayinlandi': build_tayinlandi,
-    'muddat': build_muddat,
-    'arizaKiritilmagan': build_ariza_kiritilmagan,
-    'arizaKiritilgan': build_ariza_kiritilgan,
-}
-
-
-def build_letter_document(letter):
-    """Berilgan xat yozuvi (letter dict) uchun to'ldirilgan .docx yaratadi va BytesIO qaytaradi."""
-    doc = new_document()
-    builder = TEMPLATE_BUILDERS.get(letter.get('template'), build_rad)
-    builder(doc, letter)
-
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+# ARIZA_KIRITILGAN_NIZOM_CLAUSE letter_text.py (brauzer ko'rinishi) va
+# shablon_qurish.py (shablon quruvchisi) tomonidan ham ishlatiladi —
+# kod-asosidagi build_ariza_kiritilgan() funksiyasi (endi yo'q) shu
+# konstantani ishlatgan edi, u olib tashlansa ham konstanta qoladi.
 
 
 def safe_filename(letter):
+    """Yuklab olingan fayl nomi — xat yozilgan fuqaroning F.I.O si
+    (shablon turi qo'shilmaydi, faqat ism-familiya)."""
     fio = (letter.get('fio') or 'xat').strip()
-    template = letter.get('template') or 'xat'
-    base = f"{fio}_{template}"
-    base = re.sub(r'[\\/:*?"<>|]+', '', base)
+    base = re.sub(r'[\\/:*?"<>|]+', '', fio)
     base = re.sub(r'\s+', '_', base).strip('_')
     return f"{base or 'xat'}.docx"

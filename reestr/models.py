@@ -19,6 +19,11 @@ class Xat(models.Model):
     template = models.CharField(max_length=32, choices=TEMPLATE_CHOICES)
 
     # Asosiy ma'lumotlar (barcha shablonlarda umumiy)
+    # Xatni tayyorlagan xodimning tumani — saqlashda XodimProfil.tuman'dan
+    # avtomatik to'ldiriladi (qarang: views._apply_payload). Ariza (core)
+    # tizimidagi Ariza.tuman bilan bir xil yondashuv: xodim qo'lda kiritmaydi,
+    # forma ham bunday maydonni ko'rsatmaydi.
+    tuman = models.CharField("Tuman", max_length=100, blank=True, default="")
     fio = models.CharField("F.I.O", max_length=255)
     mfy_nomi = models.CharField("MFY nomi", max_length=255)
     street = models.CharField("Ko'cha nomi", max_length=255)
@@ -77,6 +82,7 @@ class Xat(models.Model):
         return {
             "id": self.id,
             "template": self.template,
+            "tuman": self.tuman,
             "fio": self.fio,
             "mfyNomi": self.mfy_nomi,
             "street": self.street,

@@ -16,6 +16,15 @@ import copy
 from docx.oxml.ns import qn
 
 
+class ShablonTopilmadi(Exception):
+    """Kerakli .docx shablon fayli topilmadi yoki belgilanmagan.
+
+    Ikkala tizim ham (core/docx_export.py, core/xizmat_export.py,
+    reestr/docx_templates.py) shu istisnoni ko'taradi — view'lar buni
+    ushlab, foydalanuvchiga 500-xatolik o'rniga tushunarli xabar ko'rsatadi.
+    """
+
+
 # ------------------------------------------------------------
 # MATN ALMASHTIRISH (run chegaralaridan o'tib)
 # ------------------------------------------------------------

@@ -9,7 +9,7 @@ import io
 from django.conf import settings
 from docx import Document
 
-from .docx_utils import expand_paragraph, find_paragraph, replace_in_doc
+from .docx_utils import ShablonTopilmadi, expand_paragraph, find_paragraph, replace_in_doc
 from .reasons import TEMPLATE_FAYLLAR
 from .text_utils import ijrochi_qisqa_ism
 
@@ -20,10 +20,6 @@ OYLAR = {
     5: "may", 6: "iyun", 7: "iyul", 8: "avgust",
     9: "sentyabr", 10: "oktyabr", 11: "noyabr", 12: "dekabr",
 }
-
-
-class ShablonTopilmadi(Exception):
-    """Ariza kategoriyasi/holati uchun .docx shablon mavjud emas."""
 
 
 def format_sana(d):

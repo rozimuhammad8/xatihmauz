@@ -27,6 +27,7 @@ from .docx_generator import (
 # PLACEHOLDER'LAR
 # Shablonda shu belgilar turadi, ilova ularni haqiqiy qiymatga almashtiradi.
 # ------------------------------------------------------------
+P_TUMAN = "{tuman}"
 P_MFY = "{mfy}"
 P_KUCHA = "{kucha}"
 P_FIO = "{fio}"
@@ -66,7 +67,7 @@ SHART_QOSHIMCHA_MALUMOT = "{?qoshimchaMalumot}"
 
 def _sarlavha(doc):
     """Barcha xatlarda bir xil: qabul qiluvchi bloki + murojaat qatori."""
-    add_recipient_block(doc, P_MFY, P_KUCHA, P_FIO)
+    add_recipient_block(doc, P_TUMAN, P_MFY, P_KUCHA, P_FIO)
     add_murojaat_line(
         doc,
         {"murojaatfrom": P_MUROJAAT_MANBASI, "murojaatRaqami": P_MUROJAAT_RAQAMI},
@@ -84,7 +85,7 @@ def qur_rad(doc):
         (
             " MFY mahallada kompleks xizmat ko'rsatuvchi xodim, O‘zbekiston Respublikasi "
             "Prezidenti huzuridagi Ijtimoiy himoya milliy Agentligi Andijon viloyati boshqarmasi "
-            "Andijon tumani “Inson” ijtimoiy xizmatlar markazi faoliyati, hamda xizmat "
+            "{tuman} “Inson” ijtimoiy xizmatlar markazi faoliyati, hamda xizmat "
             "turlarini yaqindan tanishtirildi.",
             {},
         ),
@@ -235,12 +236,12 @@ def qur_muddat(doc):
     body_paragraph(doc, [
         (
             "O‘zbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy agentligi "
-            "Andijon viloyati Andijon tuman “Inson” ijtimoiy xizmatlar markazi ",
+            "Andijon viloyati {tuman} “Inson” ijtimoiy xizmatlar markazi ",
             {},
         ),
         (P_MUROJAAT_RAQAMI, {'bold': True}),
         (
-            "-raqamli murojaatingiz yuzasidan Andijon tuman “Inson” ijtimoiy xizmatlar "
+            "-raqamli murojaatingiz yuzasidan {tuman} “Inson” ijtimoiy xizmatlar "
             "markazi quyidagilar ma’lum qilinadi.",
             {},
         ),

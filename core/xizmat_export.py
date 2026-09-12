@@ -10,7 +10,8 @@ import io
 from django.conf import settings
 from docx import Document
 
-from .docx_export import ShablonTopilmadi, format_sana
+from .docx_export import format_sana
+from .docx_utils import ShablonTopilmadi
 from .docx_utils import replace_in_doc
 from .models import XizmatHujjati
 from .text_utils import ijrochi_qisqa_ism

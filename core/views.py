@@ -109,9 +109,11 @@ class DashboardView(RolTalabMixin, LoginRequiredMixin, TemplateView):
 
         # Talabnoma uchun VM 539-son qarori asosidagi tavsiyalar (core/talabnoma.py).
         # Maydonlar erkin matnni ham qabul qiladi — bu faqat taklif ro'yxati.
-        ctx["talabnoma_tashkilotlari"] = tashkilot_nomlari()
+        ctx["talabnoma_tashkilotlari"] = tashkilot_nomlari(ctx["xodim_tuman"])
         ctx["talabnoma_yordamlari"] = barcha_yordamlar()
-        ctx["talabnoma_xaritasi_json"] = json.dumps(yordamlar_xaritasi(), ensure_ascii=False)
+        ctx["talabnoma_xaritasi_json"] = json.dumps(
+            yordamlar_xaritasi(ctx["xodim_tuman"]), ensure_ascii=False
+        )
         return ctx
 
 

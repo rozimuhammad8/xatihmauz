@@ -13,8 +13,9 @@ Shablonda uch xil belgi ishlatiladi:
   {?avtoRad} ...              — abzats boshidagi SHART: sharti bajarilmasa
                                 butun abzats hujjatdan o'chiriladi
 
-Shablon fayli topilmasa, eski kod generatoriga qaytadi — ya'ni papka
-tasodifan o'chib ketsa ham tizim ishlashda davom etadi.
+Shablon fayli topilmasa yoki papka o'chirilgan bo'lsa, ShablonTopilmadi
+ko'tariladi (qarang: reestr/views.py xat_export) — kod-asosidagi zaxira
+generator yo'q, yagona manba shablon fayllari.
 """
 import io
 
@@ -22,6 +23,7 @@ from django.conf import settings
 from docx import Document
 
 from core.docx_utils import (
+    ShablonTopilmadi,
     delete_paragraph,
     iter_all_paragraphs,
     replace_in_doc,
@@ -33,12 +35,26 @@ from . import docx_generator as dg
 from .shablon_qurish import SHABLONLAR
 
 
-def shablon_yoli(template):
-    """Shablon kodiga mos .docx yo'li (mavjud bo'lmasa ham yo'lni qaytaradi)."""
+def shablon_yolini_topish(template):
+    """Shablon kodiga mos (.docx yo'li, fayl nomi) juftligi.
+
+    core.docx_export.shablon_yolini_topish() bilan bir xil ism va
+    xatti-harakat — ikkala tizim ham xuddi shu tarzda ShablonTopilmadi
+    ko'taradi.
+    """
     kirish = SHABLONLAR.get(template)
     if not kirish:
-        return None
-    return settings.REESTR_SHABLONLAR_DIR / kirish[0]
+        raise ShablonTopilmadi(
+            f"\"{template}\" shabloni uchun .docx fayli belgilanmagan."
+        )
+    fayl_nomi = kirish[0]
+    yol = settings.REESTR_SHABLONLAR_DIR / fayl_nomi
+    if not yol.exists():
+        raise ShablonTopilmadi(
+            f"Shablon fayli topilmadi: Shablons/reeystr/{fayl_nomi}. "
+            "Uni tiklash uchun: python manage.py reestr_shablon"
+        )
+    return yol, fayl_nomi
 
 
 # ------------------------------------------------------------
@@ -96,6 +112,7 @@ def _oddiy_almashtirishlar(data):
         "{tashkilot_nomi}": data.get("tashkilotNomi") or "Tashkilot",
         "{rahbar}": data.get("tashkilotRahbar") or "",
         "{ijrochi}": data.get("ijrochi") or "",
+        "{tuman}": data.get("tuman") or "",
     }
 
 
@@ -152,13 +169,12 @@ def _segmentlarni_qoyish(doc, segmentlar):
 
 
 def render_letter(data):
-    """Xat yozuvi (letter dict) uchun to'ldirilgan .docx — BytesIO qaytaradi."""
-    yol = shablon_yoli(data.get("template"))
-    if yol is None or not yol.exists():
-        # Shablon yo'q (masalan "arizaKiritilmagan" — unga alohida .docx
-        # yasalmagan) yoki papka o'chirilgan: eski kod generatori ishlaydi.
-        return dg.build_letter_document(data)
+    """Xat yozuvi (letter dict) uchun to'ldirilgan .docx — BytesIO qaytaradi.
 
+    Shablon topilmasa ShablonTopilmadi ko'taradi (masalan "arizaKiritilmagan"
+    — unga hech qachon .docx yasalmagan, yoki papka o'chirilgan bo'lsa).
+    """
+    yol, _fayl_nomi = shablon_yolini_topish(data.get("template"))
     doc = Document(str(yol))
 
     _shartli_abzatslarni_ishlash(doc, _shartlar(data))

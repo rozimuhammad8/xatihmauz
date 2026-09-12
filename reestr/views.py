@@ -238,6 +238,11 @@ def xat_create(request):
 
     xat = Xat(created_by=request.user)
     _apply_payload(xat, payload)
+    # Ariza (core) tizimidagi Ariza.tuman bilan bir xil: xodim kiritmaydi,
+    # o'z profilidagi tuman avtomatik yoziladi (docx hujjatning boshidagi
+    # qabul qiluvchi blokida ishlatiladi).
+    profil = getattr(request.user, "profil", None)
+    xat.tuman = profil.tuman if profil else ""
     xat.save()
 
     return JsonResponse({"success": True, "id": xat.id, "redirect": reverse("reestr:dashboard")})
@@ -275,6 +280,9 @@ def xat_edit(request, pk):
     if errors:
         return JsonResponse({"success": False, "errors": errors}, status=400)
 
+    # tuman qayta yozilmaydi (Ariza tizimidagi ariza_edit bilan bir xil) —
+    # tahrirlovchi boshqa xodim yoki superuser bo'lishi mumkin, letter yaratgan
+    # xodimning tumani saqlanib qolishi kerak.
     _apply_payload(xat, payload)
     xat.save()
 
