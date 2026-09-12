@@ -860,3 +860,38 @@ class FaylNomiSarlavhasiTest(TestCase):
         sarlavha.encode("latin-1")
         self.assertIn("filename*=UTF-8''", sarlavha)
         self.assertIn("Go", sarlavha)
+
+
+class Maxsus404Test(TestCase):
+    """404 sahifasi DEBUG=True bo'lganda ham ko'rsatilishi kerak — Django
+    sukut bo'yicha handler404'ni DEBUG=True da chaqirmaydi, shuning uchun
+    bu ikki YO'LDAN alohida ta'minlanadi (qarang: config/middleware.py):
+      1) view ichida ko'tarilgan Http404 -> Maxsus404Middleware
+      2) hech qanday manzil mos kelmagan holat -> urls.py dagi "hammasini tut"
+    Ikkalasi ham settings.DEBUG qiymatidan mustaqil ishlashi shart."""
+
+    def setUp(self):
+        tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
+        self.user = User.objects.create_user("bosh", password="p")
+        self.user.profil.tashkilot = tashkilot
+        self.user.profil.save()
+        self.client_ = Client(raise_request_exception=False)
+        self.client_.login(username="bosh", password="p")
+
+    def test_manzil_mos_kelmasa(self):
+        for debug in (True, False):
+            with self.subTest(debug=debug), override_settings(DEBUG=debug):
+                javob = self.client_.get("/bunday-manzil-yoq/")
+                self.assertEqual(javob.status_code, 404)
+                self.assertIn("Adashib qoldingiz", javob.content.decode())
+
+    def test_view_ichida_http404_kotarilsa(self):
+        for debug in (True, False):
+            with self.subTest(debug=debug), override_settings(DEBUG=debug):
+                javob = self.client_.get("/ariza/999999/")
+                self.assertEqual(javob.status_code, 404)
+                self.assertIn("Adashib qoldingiz", javob.content.decode())
+
+    def test_oddiy_sahifalar_tegilmagan(self):
+        javob = self.client_.get(reverse("core:dashboard"))
+        self.assertEqual(javob.status_code, 200)

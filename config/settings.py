@@ -123,6 +123,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # DEBUG=True bo'lsa ham custom 404 sahifasini ko'rsatadi — qarang:
+    # config/middleware.py.
+    'config.middleware.Maxsus404Middleware',
 ]
 
 try:  # pragma: no cover — muhitga bog'liq
