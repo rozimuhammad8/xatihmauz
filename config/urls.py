@@ -10,5 +10,13 @@ urlpatterns = [
     path('login/', core_views.KirishView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('ariza/', include('core.urls')),
-    path('xat/', include('xat.urls')),
+    path('reestr/', include('reestr.urls')),
 ]
+
+# Xodim uchun tushunarli o'zbekcha xato sahifalari (config/xatolar.py).
+# Faqat DEBUG=False bo'lganda ishlaydi — ishlab chiqishda Django'ning
+# batafsil xato sahifasi foydaliroq.
+handler400 = "config.xatolar.xato_400"
+handler403 = "config.xatolar.xato_403"
+handler404 = "config.xatolar.xato_404"
+handler500 = "config.xatolar.xato_500"

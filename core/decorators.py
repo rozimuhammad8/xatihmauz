@@ -4,10 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 
+from .models import XodimProfil
+
 
 def _foydalanuvchi_roli(user):
     profil = getattr(user, "profil", None)
-    return profil.rol if profil else "saxovat"
+    return profil.rol if profil else XodimProfil.ROL_BOSH_IJTIMOIY
 
 
 class RolTalabMixin:
@@ -40,5 +42,5 @@ def rol_talab(kerakli_rol):
     return decorator
 
 
-saxovat_talab = rol_talab("saxovat")
-xat_talab = rol_talab("xat")
+bosh_ijtimoiy_talab = rol_talab(XodimProfil.ROL_BOSH_IJTIMOIY)
+reestr_talab = rol_talab(XodimProfil.ROL_REESTR)

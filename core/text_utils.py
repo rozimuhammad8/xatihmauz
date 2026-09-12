@@ -7,6 +7,31 @@ import re
 _SOZ_BOSHI_RE = re.compile(r"(^|[.\s])([a-zʻʼ])")
 _BIRINCHI_HARF_RE = re.compile(r"[a-zʻʼ]")
 
+# F.I.O oxiridagi otasining ismi qo'shimchalari rasmiy hujjatlarda KICHIK
+# harf bilan yoziladi: "Yusupova Yorqinoy Xakimjon qizi", "Aliyev Vali
+# Valijon o'g'li". Bularsiz title-case ularni "Qizi"/"O'g'li" qilib
+# yuborardi.
+_QOSHIMCHALAR = {"qiz", "qizi", "ogli", "oglii", "ugli", "ugly"}
+_APOSTROFLAR = str.maketrans({"ʻ": "", "ʼ": "", "‘": "", "’": "", "`": "", "'": ""})
+
+
+def _qoshimchami(soz):
+    return soz.lower().translate(_APOSTROFLAR) in _QOSHIMCHALAR
+
+
+def _qoshimchalarni_kichiklashtirish(text):
+    sozlar = text.split(" ")
+    # Faqat OXIRIDAGI qo'shimchalar kichiklashtiriladi — ism o'rtasidagi
+    # tasodifiy so'z tegmasin.
+    for i in range(len(sozlar) - 1, -1, -1):
+        if not sozlar[i]:
+            continue
+        if _qoshimchami(sozlar[i]):
+            sozlar[i] = sozlar[i].lower()
+        else:
+            break
+    return " ".join(sozlar)
+
 
 def _bosh_va_oxiridagi_boshliqlarni_tozalash(text):
     return " ".join(text.split()) if text else ""
@@ -20,7 +45,8 @@ def smart_title_case(text):
     if not text:
         return ""
     text = text.lower()
-    return _SOZ_BOSHI_RE.sub(lambda m: m.group(1) + m.group(2).upper(), text)
+    text = _SOZ_BOSHI_RE.sub(lambda m: m.group(1) + m.group(2).upper(), text)
+    return _qoshimchalarni_kichiklashtirish(text)
 
 
 def smart_sentence_case(text):
@@ -90,3 +116,113 @@ def smart_money(value):
         return str(value).strip()
     text = f"{amount:,.0f}"
     return text.replace(",", " ")
+
+
+# ------------------------------------------------------------------
+# KIRITISHNI O'ZI TO'G'RILASH
+# Xodim shoshib, turli formatda yozishi mumkin. Formani xato bilan qaytarish
+# o'rniga, tushunarli bo'lgan hamma narsa avtomatik to'g'ri ko'rinishga
+# keltiriladi. Faqat umuman tushunib bo'lmaydigan qiymat xato beradi.
+# ------------------------------------------------------------------
+import datetime as _datetime
+
+# Sana formatlari: 2026-07-16, 16.07.2026, 16/07/2026, 16-07-2026, 2026/07/16
+_SANA_NAMUNALARI = (
+    ("%Y-%m-%d", None),
+    ("%Y/%m/%d", None),
+    ("%Y.%m.%d", None),
+    ("%d.%m.%Y", None),
+    ("%d/%m/%Y", None),
+    ("%d-%m-%Y", None),
+    ("%d.%m.%y", None),
+)
+
+
+def sanani_oqish(value):
+    """Turli formatdagi sanani `datetime.date` ga aylantiradi.
+
+    '2026-07-16', '16.07.2026', '16/07/2026', '16-07-2026', '2026/07/16'
+    hammasi bir xil natija beradi. Tushunib bo'lmasa None qaytaradi.
+    """
+    if value in (None, ""):
+        return None
+    if isinstance(value, _datetime.datetime):
+        return value.date()
+    if isinstance(value, _datetime.date):
+        return value
+
+    matn = " ".join(str(value).split())
+    if not matn:
+        return None
+
+    for namuna, _ in _SANA_NAMUNALARI:
+        try:
+            return _datetime.datetime.strptime(matn, namuna).date()
+        except ValueError:
+            continue
+    return None
+
+
+# Kirilcha -> lotincha. Shablonlardan ko'chirilgan murojaat matni ko'pincha
+# kirilchada keladi; brauzerdagi JS uni o'giradi, lekin server ham
+# ishonmasligi kerak — bazaga har doim lotincha tushsin.
+_KIRIL_XARITA = {
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Ё': 'Yo',
+    'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    'Ф': 'F', 'Х': 'X', 'Ц': 'S', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sh', 'Ъ': "'",
+    'Ы': 'I', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+    'Ў': "O'", 'Қ': 'Q', 'Ғ': "G'", 'Ҳ': 'H',
+}
+_KIRIL_XARITA.update({k.lower(): v.lower() for k, v in _KIRIL_XARITA.items()})
+_KIRIL_XARITA.update({'ў': "o'", 'қ': 'q', 'ғ': "g'", 'ҳ': 'h'})
+
+
+# "е" harfi so'z boshida yoki unlidan keyin "ye", aks holda "e" bo'ladi
+# ("Елена" -> "Yelena", lekin "Сергей" -> "Sergey"). Qoida brauzerdagi
+# krilToLotin() bilan bir xil — ikkalasi bir xil natija berishi shart.
+_KIRIL_UNLILAR = "aeiouAEIOUаеёиоуыэюяАЕЁИОУЫЭЮЯ"
+_KIRIL_HARFLAR = "a-zA-Zа-яА-ЯёЁўЎқҚғҒҳҲ'ʻʼ"
+
+
+def kirilni_lotinga(text):
+    """Kirilcha harflarni lotinchaga o'giradi. Matnda kirilcha bo'lmasa
+    hech narsa o'zgarmaydi."""
+    if not text:
+        return text
+    matn = str(text)
+    if not any(ch in _KIRIL_XARITA or ch in "еЕ" for ch in matn):
+        return matn
+
+    natija = []
+    for i, ch in enumerate(matn):
+        if ch in ("е", "Е"):
+            oldingi = matn[i - 1] if i else ""
+            soz_boshi = not oldingi or not re.match(f"[{_KIRIL_HARFLAR}]", oldingi)
+            ye = soz_boshi or oldingi in _KIRIL_UNLILAR
+            if ch == "Е":
+                natija.append("Ye" if ye else "E")
+            else:
+                natija.append("ye" if ye else "e")
+        else:
+            natija.append(_KIRIL_XARITA.get(ch, ch))
+    return "".join(natija)
+
+
+def tozalangan_matn(value):
+    """Har qanday matnli maydon uchun eng kam normalizatsiya:
+    kirilchani lotinga o'giradi, ortiqcha probel va ko'rinmas belgilarni
+    yig'ishtiradi."""
+    if not value:
+        return ""
+    matn = kirilni_lotinga(str(value))
+    matn = matn.replace("\xa0", " ").replace("\u200b", "")
+    return " ".join(matn.split())
+
+
+def raqamli_matn(value):
+    """Hisob raqami, murojaat raqami kabi maydonlar: probel va ko'rinmas
+    belgilar olib tashlanadi, qolgani tegilmaydi."""
+    if not value:
+        return ""
+    return "".join(str(value).split())

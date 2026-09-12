@@ -2,7 +2,7 @@
 """
 Har bir kategoriya uchun rad etish sabablari.
 Har bir yozuv: (kod, qisqa_nom (checkbox uchun), to'liq_matn (docx ga yoziladigan)).
-Bu matnlar avval shablonlar/*_rad.docx fayllarni yaratishda ishlatilgan matnlar bilan bir xil.
+Bu matnlar avval Shablons/Ariza/*_rad.docx fayllarni yaratishda ishlatilgan matnlar bilan bir xil.
 """
 
 REESTR = (
@@ -38,6 +38,28 @@ def _double_funding(noun):
     )
 
 
+# Faqat tibbiy yo'nalishdagi ikki yangi kategoriya uchun — yordam xarajatni
+# tasdiqlovchi hujjatlar asosida qoplanadi, shuning uchun hujjat yetishmasligi
+# alohida rad sababi hisoblanadi.
+_TIBBIY_HUJJAT_DAVOLANISH = (
+    "Davolanish xarajatlarini tasdiqlovchi hujjatlar (tibbiy muassasaning xulosasi, "
+    "retsept, dori-darmon yoki tibbiy xizmat uchun to'lov hujjatlari) to'liq taqdim "
+    "etilmaganligi aniqlangan. 462-sonli qaror bilan tasdiqlangan Nizomga muvofiq, "
+    "davolanish xarajatlarini qoplash yordami faqat amalga oshirilgan xarajat "
+    "hujjat bilan tasdiqlangan taqdirdagina ko'rsatilishi belgilangan. Shu sababli, "
+    "ushbu turdagi yordamni tayinlash imkoni bo'lmagan."
+)
+
+_TIBBIY_HUJJAT_JARROHLIK = (
+    "Jarrohlik amaliyoti zarurligi to'g'risida tibbiy muassasaning xulosasi hamda "
+    "amaliyot xarajatlarini tasdiqlovchi hujjatlar taqdim etilmaganligi aniqlangan. "
+    "462-sonli qaror bilan tasdiqlangan Nizomga muvofiq, jarrohlik amaliyoti "
+    "xarajatlarini qoplash yordami faqat vakolatli tibbiy muassasa xulosasi va "
+    "xarajatni tasdiqlovchi hujjatlar asosida ko'rsatilishi belgilangan. Shu sababli, "
+    "ushbu turdagi yordamni tayinlash imkoni bo'lmagan."
+)
+
+
 BOSHQA_KOD = "boshqa"
 
 RAD_SABABLARI = {
@@ -62,9 +84,18 @@ RAD_SABABLARI = {
         ("yettilik", "\"Mahalla yettiligi\" rad etish qarorini qabul qilgan", MAHALLA_YETTILIGI),
         (BOSHQA_KOD, "Boshqa sabab (qo'lda kiritiladi)", None),
     ],
-    "favqulodda": [
+    "davolanish": [
         ("reestr", "Ijtimoiy reestrda emas / daromad chegarasidan oshgan", REESTR),
-        ("ikki_karra", "Xuddi shu maqsadda boshqa jamg'armadan yordam olingan", _double_funding("favqulodda (shoshilinch) yordam")),
+        ("ikki_karra", "Xuddi shu maqsadda boshqa jamg'armadan yordam olingan", _double_funding("davolanish xarajatlari")),
+        ("tibbiy_hujjat", "Tibbiy hujjatlar taqdim etilmagan", _TIBBIY_HUJJAT_DAVOLANISH),
+        ("limit", "Mahalla uchun ajratilgan mablag' (limit) tugagan", FUND_LIMIT),
+        ("yettilik", "\"Mahalla yettiligi\" rad etish qarorini qabul qilgan", MAHALLA_YETTILIGI),
+        (BOSHQA_KOD, "Boshqa sabab (qo'lda kiritiladi)", None),
+    ],
+    "jarrohlik": [
+        ("reestr", "Ijtimoiy reestrda emas / daromad chegarasidan oshgan", REESTR),
+        ("ikki_karra", "Xuddi shu maqsadda boshqa jamg'armadan yordam olingan", _double_funding("jarrohlik amaliyoti xarajatlari")),
+        ("tibbiy_hujjat", "Jarrohlik zarurati haqida tibbiy xulosa yo'q", _TIBBIY_HUJJAT_JARROHLIK),
         ("limit", "Mahalla uchun ajratilgan mablag' (limit) tugagan", FUND_LIMIT),
         ("yettilik", "\"Mahalla yettiligi\" rad etish qarorini qabul qilgan", MAHALLA_YETTILIGI),
         (BOSHQA_KOD, "Boshqa sabab (qo'lda kiritiladi)", None),
@@ -100,7 +131,8 @@ KATEGORIYALAR = [
     ("kiyim_kechak", "Kiyim-kechak"),
     ("kommunal_tolovlar", "Kommunal to'lovlar"),
     ("uy_joy", "Uy-joy ta'mirlash"),
-    ("favqulodda", "Favqulodda (shoshilinch) yordam"),
+    ("davolanish", "Davolanish xarajatlari"),
+    ("jarrohlik", "Jarrohlik amaliyoti xarajatlari"),
 ]
 
 HOLATLAR = [
@@ -125,8 +157,10 @@ TEMPLATE_FAYLLAR = {
     ("kommunal_tolovlar", "rad"): "kommunal_tolovlar_rad.docx",
     ("uy_joy", "tayinlangan"): "uy_joy_tamirlash_tayinlangan.docx",
     ("uy_joy", "rad"): "uy_joy_rad.docx",
-    ("favqulodda", "tayinlangan"): "favqulodda_yordam_tayinlangan.docx",
-    ("favqulodda", "rad"): "favqulodda_yordam_rad.docx",
+    ("davolanish", "tayinlangan"): "davolanish_tayinlangan.docx",
+    ("davolanish", "rad"): "davolanish_rad.docx",
+    ("jarrohlik", "tayinlangan"): "jarrohlik_tayinlangan.docx",
+    ("jarrohlik", "rad"): "jarrohlik_rad.docx",
 }
 
 
