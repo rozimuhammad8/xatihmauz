@@ -17,4 +17,5 @@ whitenoise==6.7.0
 gunicorn==23.0.0
 # Windows uchun gunicorn ishlamaydi, o'rniga waitress:
 #   pip install waitress
+
 #   waitress-serve --port=8000 config.wsgi:application
