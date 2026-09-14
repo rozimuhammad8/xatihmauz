@@ -6,13 +6,13 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from .decorators import RolTalabMixin, bosh_ijtimoiy_talab
-from .docx_export import ShablonTopilmadi, ariza_docx_yaratish
+from .docx_export import ShablonTopilmadi, ariza_docx_yaratish, ariza_preview_malumotlari
 from .docx_utils import content_disposition_header, xavfsiz_fayl_nomi
 from .xizmat_export import xizmat_docx_yaratish
 from .forms import ArizaForm, XizmatHujjatiForm
@@ -232,6 +232,29 @@ def ariza_export(request, pk):
 
     nom = f"{ariza.fio}_{ariza.get_kategoriya_display()}_{ariza.get_holat_display()}.docx"
     return _docx_javobi(buffer, nom)
+
+
+@bosh_ijtimoiy_talab
+def ariza_preview(request, pk):
+    ariza = get_object_or_404(Ariza, pk=pk)
+    if not _ariza_uchun_ruxsat(request, ariza):
+        return HttpResponseForbidden("Sizga bu arizani ko'rishga ruxsat yo'q.")
+    try:
+        malumotlar = ariza_preview_malumotlari(ariza)
+    except ShablonTopilmadi as xato:
+        messages.error(request, str(xato))
+        return redirect("core:dashboard")
+    except Exception:
+        logger.exception("Ariza preview'ida xatolik (ariza id=%s)", ariza.pk)
+        messages.error(
+            request,
+            "Hujjatni ko'rsatib bo'lmadi. Shablon fayli buzilgan bo'lishi mumkin — "
+            "administratorga xabar bering.",
+        )
+        return redirect("core:dashboard")
+
+    ctx = {"ariza": ariza, **malumotlar}
+    return render(request, "core/preview.html", ctx)
 
 
 # ============================================================

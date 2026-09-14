@@ -154,6 +154,7 @@
   }
   .icon-btn svg{width:15px;height:15px}
   .icon-btn:hover{background:var(--main-bg);color:var(--text-1);border-color:#cfd6e0}
+  .icon-btn.view:hover{color:#7c3aed;border-color:#ddd6fe}
   .icon-btn.edit:hover{color:var(--accent);border-color:var(--accent-2)}
   .icon-btn.export:hover{color:#0891b2;border-color:#a5f3fc}
   .icon-btn.delete:hover{color:var(--danger);border-color:#f3b3b0}
@@ -433,6 +434,9 @@
             <td class="muted">{{ ariza.created_by.username }}</td>
             <td>
               <div class="actions">
+                <a class="icon-btn view" href="{% url 'core:ariza_preview' ariza.id %}" target="_blank" title="Ko'rish">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </a>
                 <a class="icon-btn export" href="{% url 'core:ariza_export' ariza.id %}" title="DOCX yuklab olish">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </a>

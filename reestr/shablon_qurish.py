@@ -273,7 +273,7 @@ def qur_ariza_kiritilgan(doc):
         (" bilan ro‘yxatga olinganligini ma’lum qilamiz.", {}),
     ])
     body_paragraph(doc, [(dg.SHIKOYAT_APPEAL_PARAGRAPH, {})])
-    # Namunada imzo bloki yo'q (ataylab).
+    add_signature_block(doc, _imzo_placeholderlari())
 
 
 def qur_ariza_kiritilmagan(doc):

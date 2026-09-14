@@ -467,8 +467,8 @@ BANK_PARAGRAPH_SEGMENTS = [
 # 6) ARIZA KIRITILGAN XATI (template == 'arizaKiritilgan')
 # "Ariza kiritilmagan"ning aksi — ariza haqiqatan ham "Ijtimoiy himoya
 # yagona reyestri"ga qabul qilib ro'yxatga olinganini tasdiqlaydi
-# (exmple/"Ariza Kiritilgan.docx" asosida). Namunada boshqa shablonlardan
-# farqli o'laroq imzo bloki yo'q — ataylab shunday qoldirilgan.
+# (exmple/"Ariza Kiritilgan.docx" asosida). Boshqa shablonlar kabi imzo
+# bloki bilan tugaydi.
 # ------------------------------------------------------------
 ARIZA_KIRITILGAN_NIZOM_CLAUSE = [
     ("Shuningdek, mazkur qarorning ", {}),

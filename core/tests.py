@@ -14,7 +14,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from docx import Document
 
-from core.docx_export import ShablonTopilmadi, ariza_docx_yaratish
+from core.docx_export import ShablonTopilmadi, ariza_docx_yaratish, ariza_preview_malumotlari
 from core.models import Ariza, Tashkilot, XizmatHujjati, XodimProfil
 from reestr.models import Xat
 
@@ -137,6 +137,86 @@ class ArizaEksportTest(TestCase):
         self.assertEqual(ariza.rad_sabablari_royxati(), [])
 
 
+class ArizaPreviewTest(TestCase):
+    """Bosh ijtimoiy (Ariza) tizimidagi HTML preview — Reestr tizimidagidek,
+    lekin matn to'g'ridan-to'g'ri chiqariladigan .docx dan olinadi, shuning
+    uchun preview va eksport hech qachon farq qilmasligi kerak."""
+
+    def setUp(self):
+        self.tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
+        self.user = User.objects.create_user(
+            "bosh", password="p", first_name="Diyor", last_name="Atamirzayev"
+        )
+        self.user.profil.tuman = "Andijon tuman"
+        self.user.profil.tashkilot = self.tashkilot
+        self.user.profil.save()
+        self.client_ = Client()
+        self.client_.login(username="bosh", password="p")
+
+    def _ariza_yaratish(self, kategoriya, holat, **qoshimcha):
+        data = dict(
+            kategoriya=kategoriya, holat=holat, mfy="katta guzar", kucha="anisiy",
+            fio="atamirzayev diyor", tashkilot="Ishonch telefoni", sana="2026-05-01",
+            murojaat_raqami="1/26", ariza_raqami="55", **qoshimcha
+        )
+        javob = self.client_.post(reverse("core:ariza_create"), data)
+        self.assertEqual(javob.status_code, 302)
+        return Ariza.objects.latest("id")
+
+    def test_preview_sahifasi_ochiladi(self):
+        ariza = self._ariza_yaratish(
+            "oziq_ovqat", "tayinlangan", ajratilgan_summa="1500000", kollegal_qaror="7845754",
+        )
+        javob = self.client_.get(reverse("core:ariza_preview", args=[ariza.pk]))
+        self.assertEqual(javob.status_code, 200)
+        self.assertContains(javob, "Atamirzayev Diyor")
+        self.assertContains(javob, f"{TASHKILOT_NOMI} direktori:")
+        self.assertContains(javob, "Ijrochi: D.Atamirzayev")
+
+    def test_preview_va_eksport_matni_bir_xil(self):
+        """Preview'dagi har bir abzats matni eksport qilingan .docx dagi
+        abzatslar orasida aynan mavjud bo'lishi kerak — aks holda ikkisi
+        orasida farq (divergensiya) paydo bo'lgan bo'ladi."""
+        ariza = self._ariza_yaratish("davolanish", "rad")
+        buffer, _nom = ariza_docx_yaratish(ariza)
+        # \xa0 -> oddiy probel: preview ham xuddi shu almashtirishni qiladi
+        # (Wordda tekislash uchun ishlatilgan \xa0 belgilar bilan solishtirish
+        # ma'nosiz bo'lardi).
+        docx_paragraflari = [
+            p.text.replace("\xa0", " ") for p in Document(buffer).paragraphs
+        ]
+
+        malumotlar = ariza_preview_malumotlari(ariza)
+        for p in malumotlar["paragraphs"]:
+            oddiy_matn = (
+                p["html"].replace("<b>", "").replace("</b>", "")
+                .replace("<i>", "").replace("</i>", "")
+            )
+            import html as html_modul
+            oddiy_matn = html_modul.unescape(oddiy_matn).strip()
+            self.assertTrue(
+                any(oddiy_matn in docx_p for docx_p in docx_paragraflari),
+                f"Preview abzatsi docx'da topilmadi: {oddiy_matn!r}",
+            )
+
+    def test_boshqa_foydalanuvchi_koraolmaydi(self):
+        ariza = self._ariza_yaratish("davolanish", "rad")
+        boshqa = User.objects.create_user("boshqa", password="p")
+        boshqa.profil.tashkilot = self.tashkilot
+        boshqa.profil.save()
+        client2 = Client()
+        client2.login(username="boshqa", password="p")
+        javob = client2.get(reverse("core:ariza_preview", args=[ariza.pk]))
+        self.assertEqual(javob.status_code, 403)
+
+    def test_shablon_topilmasa_dashboardga_qaytaradi(self):
+        ariza = self._ariza_yaratish("davolanish", "rad")
+        Ariza.objects.filter(pk=ariza.pk).update(kategoriya="favqulodda")
+        ariza.refresh_from_db()
+        javob = self.client_.get(reverse("core:ariza_preview", args=[ariza.pk]))
+        self.assertRedirects(javob, reverse("core:dashboard"))
+
+
 class ReestrXatTest(TestCase):
     PAYLOAD = {
         "template": "rad",
@@ -230,6 +310,21 @@ class ReestrXatTest(TestCase):
         javob = self.client_.get(reverse("reestr:preview", args=[xat.pk]))
         self.assertEqual(javob.status_code, 200)
         self.assertContains(javob, "32065423")
+
+    def test_ariza_kiritilgan_imzo_bloki_bor(self):
+        """Avval "Ariza kiritilgan" preview'da imzo bloki (direktor/ijrochi)
+        ko'rsatilmasdi, garchi .docx eksportida allaqachon bor edi — endi
+        ikkalasida ham bor."""
+        self._saqlash(template="arizaKiritilgan", isQayta=False, radSabablari={})
+        matn = self._eksport_matni()
+        self.assertIn(f"{TASHKILOT_NOMI} direktori:", matn)
+        self.assertIn("Ijrochi: D.Atamirzayev", matn)
+
+        xat = Xat.objects.latest("id")
+        preview = self.client_.get(reverse("reestr:preview", args=[xat.pk]))
+        self.assertEqual(preview.status_code, 200)
+        self.assertContains(preview, "direktori:")
+        self.assertContains(preview, "Ijrochi: D.Atamirzayev")
 
     def test_boshqa_formatdagi_sana_ozi_togirlanadi(self):
         """16.07.2026 / 16-07-2026 kabi ko'rinishlar ham qabul qilinadi."""
@@ -901,8 +996,8 @@ class Maxsus404Test(TestCase):
 class ArizaKiritilmaganTest(TestCase):
     """'Ariza kiritilmagan' — reestr tizimiga qaytarilgan shablon. Ariza
     maqsadi/ID/sanasi talab qilinmaydi (muddat bilan bir xil qoida),
-    ixtiyoriy qo'shimcha ma'lumot maydoni bor, imzo bloki BOR (faqat
-    "arizaKiritilgan" imzosiz)."""
+    ixtiyoriy qo'shimcha ma'lumot maydoni bor, imzo bloki ham bor
+    (barcha reestr shablonlarida bo'lgani kabi)."""
 
     def setUp(self):
         tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")

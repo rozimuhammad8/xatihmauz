@@ -218,8 +218,13 @@ PARAGRAPH_BUILDERS = {
     "arizaKiritilmagan": ariza_kiritilmagan_paragraphs,
 }
 
-# Namunada faqat "arizaKiritilgan" imzo blokisiz (ataylab) — docx_generator.py bilan bir xil.
-TEMPLATES_WITH_SIGNATURE = {"rad", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan"}
+# Barcha shablonlarda imzo bloki bor (Shablons/reeystr/*.docx dagi
+# {tashkilot_nomi}/{rahbar}/{ijrochi} placeholderlari — .docx eksportida bu
+# har doim to'ldiriladi, shuning uchun preview ham hech qaysi shablonda
+# uni yashirmasligi kerak).
+TEMPLATES_WITH_SIGNATURE = {
+    "rad", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan", "arizaKiritilgan",
+}
 
 
 def build_preview(data):

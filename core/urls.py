@@ -11,6 +11,7 @@ urlpatterns = [
     path("<int:pk>/edit/", views.ariza_edit, name="ariza_edit"),
     path("<int:pk>/delete/", views.ariza_delete, name="ariza_delete"),
     path("<int:pk>/export/", views.ariza_export, name="ariza_export"),
+    path("<int:pk>/preview/", views.ariza_preview, name="ariza_preview"),
 
     # Xizmat hujjatlari (bildirgi / ogohlantirish / talabnoma)
     path("xizmat/create/", views.xizmat_create, name="xizmat_create"),
