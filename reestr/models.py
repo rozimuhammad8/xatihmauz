@@ -9,10 +9,13 @@ TEMPLATE_CHOICES = [
     ("tayinlandi", "Tayinlash"),
     ("muddat", "Muddat so'rash"),
     ("arizaKiritilgan", "Ariza kiritilgan"),
+    ("arizaKiritilmagan", "Ariza kiritilmagan"),
 ]
 
-# arizaMaqsadi/arizaVaqti/arizaID bu shablonda ishlatilmaydi (docx_generator.py bilan mos)
-TEMPLATES_WITHOUT_ARIZA_INFO = ("muddat",)
+# arizaMaqsadi/arizaVaqti/arizaID bu shablonlarda ishlatilmaydi (docx_generator.py
+# bilan mos): "muddat" — murojaatga hali javob tayyor emas; "arizaKiritilmagan" —
+# ariza umuman kiritilmagan, shuning uchun uning maqsadi/sanasi/ID'si yo'q.
+TEMPLATES_WITHOUT_ARIZA_INFO = ("muddat", "arizaKiritilmagan")
 
 
 class Xat(models.Model):

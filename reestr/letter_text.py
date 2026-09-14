@@ -177,18 +177,6 @@ def muddat_paragraphs(data):
     return paras
 
 
-def ariza_kiritilmagan_paragraphs(data):
-    return [
-        _p([(dg.ARIZA_KIRITILMAGAN_INTRO, {})]),
-        _p([(dg.ARIZA_KIRITILMAGAN_FORM_INTRO, {})]),
-        _p([(dg.ARIZA_KIRITILMAGAN_FORM_1, {})]),
-        _p([(dg.ARIZA_KIRITILMAGAN_FORM_2, {})]),
-        _p([(dg.ARIZA_KIRITILMAGAN_MONTHLY_LIMIT, {})]),
-        _p([(dg.ARIZA_KIRITILMAGAN_CONCLUSION, {})]),
-        _p([(dg.SHIKOYAT_APPEAL_PARAGRAPH, {})]),
-    ]
-
-
 def ariza_kiritilgan_paragraphs(data):
     paras = [
         _p(dg.NIZOM_FAMILY_REGISTRY_PARAGRAPH),
@@ -206,16 +194,31 @@ def ariza_kiritilgan_paragraphs(data):
     return paras
 
 
+def ariza_kiritilmagan_paragraphs(data):
+    paras = [
+        _p([(dg.ARIZA_KIRITILMAGAN_INTRO, {})]),
+        _p([(dg.ARIZA_KIRITILMAGAN_FORM_INTRO, {})]),
+        _p([(dg.ARIZA_KIRITILMAGAN_FORM_1, {})]),
+        _p([(dg.ARIZA_KIRITILMAGAN_FORM_2, {})]),
+        _p([(dg.ARIZA_KIRITILMAGAN_MONTHLY_LIMIT, {})]),
+        _p([(dg.ARIZA_KIRITILMAGAN_CONCLUSION, {})]),
+        _p([(dg.SHIKOYAT_APPEAL_PARAGRAPH, {})]),
+    ]
+    if data.get("qoshimchaMalumot"):
+        paras.append(_p([(data.get("qoshimchaMalumot"), {})]))
+    return paras
+
+
 PARAGRAPH_BUILDERS = {
     "rad": rad_paragraphs,
     "tasdiqlandi": tasdiqlandi_paragraphs,
     "tayinlandi": tayinlandi_paragraphs,
     "muddat": muddat_paragraphs,
-    "arizaKiritilmagan": ariza_kiritilmagan_paragraphs,
     "arizaKiritilgan": ariza_kiritilgan_paragraphs,
+    "arizaKiritilmagan": ariza_kiritilmagan_paragraphs,
 }
 
-# Namunalarda faqat "arizaKiritilgan" imzo blokisiz (ataylab) — docx_generator.py bilan bir xil.
+# Namunada faqat "arizaKiritilgan" imzo blokisiz (ataylab) — docx_generator.py bilan bir xil.
 TEMPLATES_WITH_SIGNATURE = {"rad", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan"}
 
 

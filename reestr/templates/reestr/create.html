@@ -308,6 +308,13 @@
     <p class="note">Yuqoridagi "Asosiy ma'lumotlar" va Ariza maqsadi/ID/sanasi barchasi to'ldirilishi kerak.</p>
   </div>
 
+  <!-- ARIZA KIRITILMAGAN -->
+  <div class="card conditional-fields" id="arizaKiritilmaganFields">
+    <h3>Ariza kiritilmagan ma'lumotlari</h3>
+    <div class="field"><label>Qo'shimcha ma'lumot</label><input type="text" id="arizaKiritilmaganQoshimcha" name="arizaKiritilmaganQoshimcha" placeholder="Ixtiyoriy qo'shimcha ma'lumot"></div>
+    <p class="note" style="margin-top:12px">Ariza maqsadi/ID/sanasi kerak emas — ariza umuman kiritilmagan.</p>
+  </div>
+
   <div class="form-actions">
     <a href="{% url 'reestr:dashboard' %}" class="btn">Bekor qilish</a>
     <button type="button" class="btn btn-primary" id="generateBtn">{% if is_edit %}Saqlash{% else %}Xat yaratish{% endif %}</button>
@@ -527,10 +534,11 @@
   });
 
   /* ---------------- TEMPLATE SELECTOR ---------------- */
-  const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat'];
+  const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat', 'arizaKiritilmagan'];
   const fieldMap = {
     rad: 'radFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
     muddat: 'muddatFields', arizaKiritilgan: 'arizaKiritilganFields',
+    arizaKiritilmagan: 'arizaKiritilmaganFields',
   };
   let currentTemplate = 'rad';
 
@@ -787,6 +795,8 @@
       data.tayinlashQoshimcha = getVal('tayinlashQoshimcha');
     } else if (currentTemplate === 'muddat'){
       data.qoshimchaMalumot = getVal('qoshimchaMalumot');
+    } else if (currentTemplate === 'arizaKiritilmagan'){
+      data.qoshimchaMalumot = getVal('arizaKiritilmaganQoshimcha');
     }
     return data;
   }
@@ -905,6 +915,8 @@
       document.getElementById('tayinlashQoshimcha').value = d.tayinlashQoshimcha || '';
     } else if (d.template === 'muddat'){
       document.getElementById('qoshimchaMalumot').value = d.qoshimchaMalumot || '';
+    } else if (d.template === 'arizaKiritilmagan'){
+      document.getElementById('arizaKiritilmaganQoshimcha').value = d.qoshimchaMalumot || '';
     }
   }
 

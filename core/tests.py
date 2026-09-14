@@ -660,8 +660,9 @@ class SahifalarOchiladiTest(TestCase):
         User.objects.create_superuser("admin", password="p")
         c = Client()
         c.login(username="admin", password="p")
-        for manzil in ("/admin/", "/admin/core/ariza/", "/admin/core/xizmathujjati/",
-                       "/admin/core/tashkilot/", "/admin/reestr/xat/"):
+        # Admin panel manzili "panel/" (config/urls.py) — "admin/" emas.
+        for manzil in ("/panel/", "/panel/core/ariza/", "/panel/core/xizmathujjati/",
+                       "/panel/core/tashkilot/", "/panel/reestr/xat/"):
             with self.subTest(manzil=manzil):
                 self.assertEqual(c.get(manzil).status_code, 200)
 
@@ -895,3 +896,94 @@ class Maxsus404Test(TestCase):
     def test_oddiy_sahifalar_tegilmagan(self):
         javob = self.client_.get(reverse("core:dashboard"))
         self.assertEqual(javob.status_code, 200)
+
+
+class ArizaKiritilmaganTest(TestCase):
+    """'Ariza kiritilmagan' — reestr tizimiga qaytarilgan shablon. Ariza
+    maqsadi/ID/sanasi talab qilinmaydi (muddat bilan bir xil qoida),
+    ixtiyoriy qo'shimcha ma'lumot maydoni bor, imzo bloki BOR (faqat
+    "arizaKiritilgan" imzosiz)."""
+
+    def setUp(self):
+        tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
+        self.user = User.objects.create_user(
+            "r", password="p", first_name="Diyor", last_name="Atamirzayev"
+        )
+        self.user.profil.rol = XodimProfil.ROL_REESTR
+        self.user.profil.tuman = "Farg'ona tuman"
+        self.user.profil.tashkilot = tashkilot
+        self.user.profil.save()
+        self.client_ = Client()
+        self.client_.login(username="r", password="p")
+
+    PAYLOAD = {
+        "template": "arizaKiritilmagan",
+        "fio": "test fuqaro",
+        "mfyNomi": "katta guzar",
+        "street": "anisiy",
+        "murojaatfrom": "Ishonch telefoni",
+        "murojaatRaqami": "1/26",
+        "murojaatVaqti": "2026-07-16",
+    }
+
+    def _saqlash(self, **ozgarish):
+        payload = dict(self.PAYLOAD, **ozgarish)
+        return self.client_.post(
+            reverse("reestr:create"), json.dumps(payload), content_type="application/json"
+        )
+
+    def test_ariza_malumotisiz_saqlanadi(self):
+        """arizaMaqsadi/arizaVaqti/arizaID berilmasa ham xato bermasligi kerak."""
+        javob = self._saqlash()
+        self.assertTrue(javob.json()["success"], javob.content)
+
+    def test_eksportda_placeholder_qolmaydi(self):
+        self._saqlash(qoshimchaMalumot="Qo'shimcha izoh.")
+        xat = Xat.objects.latest("id")
+        javob = self.client_.get(reverse("reestr:export", args=[xat.pk]))
+        self.assertEqual(javob.status_code, 200)
+        matn = docx_matni(javob.content)
+        self.assertNotIn("{", matn)
+        self.assertIn("Reyestrga kiritish", matn)
+        self.assertIn("Farg'ona tuman", matn)
+        self.assertIn("Qo'shimcha izoh.", matn)
+        self.assertIn(f"{TASHKILOT_NOMI} direktori:", matn)  # imzo bloki BOR
+
+    def test_qoshimcha_malumotsiz_ham_ishlaydi(self):
+        """Qo'shimcha ma'lumot ixtiyoriy — bo'sh bo'lsa ham eksport ishlashi kerak."""
+        self._saqlash()
+        xat = Xat.objects.latest("id")
+        javob = self.client_.get(reverse("reestr:export", args=[xat.pk]))
+        self.assertEqual(javob.status_code, 200)
+        self.assertNotIn("{", docx_matni(javob.content))
+
+    def test_preview_ishlaydi(self):
+        self._saqlash(qoshimchaMalumot="Izoh matni.")
+        xat = Xat.objects.latest("id")
+        javob = self.client_.get(reverse("reestr:preview", args=[xat.pk]))
+        self.assertEqual(javob.status_code, 200)
+        self.assertContains(javob, "Reyestrga kiritish")
+        self.assertContains(javob, "Izoh matni.")
+
+    def test_dashboardda_shablon_tanlovida_bor(self):
+        javob = self.client_.get(reverse("reestr:create_page"))
+        self.assertEqual(javob.status_code, 200)
+        self.assertContains(javob, 'data-template="arizaKiritilmagan"')
+        self.assertContains(javob, "Ariza kiritilmagan")
+
+    def test_docx_va_preview_sozma_soz_bir_xil(self):
+        """.docx shabloni va brauzer ko'rinishi bir xil matn ko'rsatishi
+        shart — ikkalasi ham docx_generator.py dagi bitta manbadan oladi."""
+        import re as _re
+        from reestr.letter_text import build_preview
+
+        self._saqlash(qoshimchaMalumot="Qo'shimcha izoh matni.")
+        xat = Xat.objects.latest("id")
+        matn = docx_matni(self.client_.get(reverse("reestr:export", args=[xat.pk])).content)
+
+        _, _, paragraphs, has_signature = build_preview(xat.to_letter_dict())
+        self.assertTrue(has_signature)
+        for html in paragraphs:
+            toza = (_re.sub(r"<[^>]+>", "", html)
+                    .replace("&#x27;", "'").replace("&quot;", '"').replace("&amp;", "&"))
+            self.assertIn(toza.strip(), matn, f"preview'da bor, .docx'da yo'q: {toza[:80]}")

@@ -153,7 +153,12 @@ def _apply_payload(xat, payload):
     xat.tolov_sum = format_money(tasdiq.get("tolovSum", "")) if template == "tasdiqlandi" else ""
     xat.hisob_raqami = raqamli_matn(tasdiq.get("hisobRaqami")) if template == "tasdiqlandi" else ""
     xat.tayinlash_qoshimcha = tozalangan_matn(payload.get("tayinlashQoshimcha")) if template == "tayinlandi" else ""
-    xat.qoshimcha_malumot = tozalangan_matn(payload.get("qoshimchaMalumot")) if template == "muddat" else ""
+    # "muddat" va "arizaKiritilmagan" ikkalasi ham xuddi shu ixtiyoriy
+    # "qo'shimcha ma'lumot" maydonidan foydalanadi (bir xil model maydoni).
+    xat.qoshimcha_malumot = (
+        tozalangan_matn(payload.get("qoshimchaMalumot"))
+        if template in ("muddat", "arizaKiritilmagan") else ""
+    )
 
 
 def _form_context(request):

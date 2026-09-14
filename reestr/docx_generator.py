@@ -500,6 +500,43 @@ ARIZA_KIRITILGAN_NIZOM_CLAUSE = [
 # kod-asosidagi build_ariza_kiritilgan() funksiyasi (endi yo'q) shu
 # konstantani ishlatgan edi, u olib tashlansa ham konstanta qoladi.
 
+# "arizaKiritilgan" VA "arizaKiritilmagan" shablonlarida so'zma-so'z bir xil
+# ishlatiladigan ibora — letter_text.py (preview) va shablon_qurish.py
+# (shablon quruvchisi) ikkalasi ham shuni ishlatadi.
+SHIKOYAT_APPEAL_PARAGRAPH = (
+    "Murojaatingiz yuzasidan qabul qilingan qarordan qoniqish hosil qilmagan "
+    "taqdiringizda O‘zbekiston Respublikasining “Jismoniy va yuridik shaxslarning "
+    "murojaatlari to‘g‘risida”gi Qonuniga ko‘ra yuqori turuvchi tashkilotga shikoyat "
+    "qilishingiz mumkinligi haqida ogohlantirib o‘taman."
+)
+
+
+# ------------------------------------------------------------
+# "ARIZA KIRITILMAGAN" XATI (template == 'arizaKiritilmagan')
+# Butunlay statik matn — xat matnining o'zida "ariza"ga oid hech narsa yo'q
+# (chunki ariza umuman kiritilmagan). letter_text.py (preview) va
+# shablon_qurish.py (shablon quruvchisi) tomonidan ishlatiladi.
+# ------------------------------------------------------------
+# Matn Shablons/reeystr/ariza_kiritilmagan.docx fayli bilan SO'ZMA-SO'Z bir xil.
+ARIZA_KIRITILMAGAN_INTRO = 'Murojaatingiz, Andijon tumani “Inson” ijtimoiy xizmatlar markazi  xodimlari tomonidan o‘rganildi. O‘rganish davomida, Sizga Sizga O‘zbekiston Respublikasi Vazirlar Mahkamasining 2026 yil 29 yanvardagi “Ijtimoiy reestrni yuritish tartibi to‘g‘risida”gi 35-son qarori bilan tasdiqlangan Nizomning 1-ilova 2-bobida Oilani Reyestrga kiritish toʻgʻrisidagi murojaatni koʻrib chiqish tartibi belgilanganligi tushuntirildi.'
+
+ARIZA_KIRITILMAGAN_FORM_INTRO = (
+    "Ushbu nizomning 5-bandiga asosan Ariza beruvchi oilasini Reyestrga kiritish "
+    "uchun vakolatli organga quyidagi shakllarda murojaat qiladi:"
+)
+
+ARIZA_KIRITILMAGAN_FORM_1 = 'davlat xizmatlari markazi yoki vakolatli organga borgan holda yoki yashash manzili boʻyicha mahallaga biriktirilgan ijtimoiy xodim orqali;'
+
+ARIZA_KIRITILMAGAN_FORM_2 = '“YAMIH” AT, Yagona interaktiv davlat xizmatlari portali (keyingi oʻrinlarda — YIDXP) yoki “Ijtimoiy karta” mobil ilovasi orqali mustaqil ravishda.'
+
+ARIZA_KIRITILMAGAN_MONTHLY_LIMIT = (
+    "Har bir oila tomonidan Reyestrga kiritish uchun ariza topshirish bir oyda bir "
+    "marta amalga oshirishligi belgilangan."
+)
+
+# Matn Shablons/reeystr/ariza_kiritilmagan.docx fayli bilan SO'ZMA-SO'Z bir xil.
+ARIZA_KIRITILMAGAN_CONCLUSION = 'Yuqoridagilardan kelib chikan xolda Siz kam ta’minlangan oilalarga bolalar nafaqasi yoki moddiy yordam tayinlashni so‘rob murojaat qilmaganligingizni ma’lum qiladi.'
+
 
 def safe_filename(letter):
     """Yuklab olingan fayl nomi — xat yozilgan fuqaroning F.I.O si

@@ -273,8 +273,21 @@ def qur_ariza_kiritilgan(doc):
         (" bilan ro‘yxatga olinganligini ma’lum qilamiz.", {}),
     ])
     body_paragraph(doc, [(dg.SHIKOYAT_APPEAL_PARAGRAPH, {})])
-    # Namunada imzo bloki yo'q (ataylab) — docx_generator.build_ariza_kiritilgan
-    # bilan bir xil.
+    # Namunada imzo bloki yo'q (ataylab).
+
+
+def qur_ariza_kiritilmagan(doc):
+    _sarlavha(doc)
+
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_INTRO, {})])
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_FORM_INTRO, {})])
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_FORM_1, {})])
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_FORM_2, {})])
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_MONTHLY_LIMIT, {})])
+    body_paragraph(doc, [(dg.ARIZA_KIRITILMAGAN_CONCLUSION, {})])
+    body_paragraph(doc, [(dg.SHIKOYAT_APPEAL_PARAGRAPH, {})])
+    body_paragraph(doc, [(SHART_QOSHIMCHA_MALUMOT, {}), (P_QOSHIMCHA_MALUMOT, {})])
+    add_signature_block(doc, _imzo_placeholderlari())
 
 
 def _imzo_placeholderlari():
@@ -292,6 +305,7 @@ SHABLONLAR = {
     "tayinlandi": ("tayinlandi.docx", qur_tayinlandi),
     "muddat": ("muddat.docx", qur_muddat),
     "arizaKiritilgan": ("ariza_kiritilgan.docx", qur_ariza_kiritilgan),
+    "arizaKiritilmagan": ("ariza_kiritilmagan.docx", qur_ariza_kiritilmagan),
 }
 
 
