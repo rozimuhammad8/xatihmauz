@@ -211,6 +211,7 @@
   .field input[type=text]:focus,.field textarea:focus{
     outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft);
   }
+  .field .hint{display:block;font-size:11.5px;font-weight:400;margin-top:5px;color:var(--text-2)}
 
   /* Custom select */
   .csel{position:relative}
@@ -823,6 +824,7 @@
   const overlay = document.getElementById('overlay');
   const form = document.getElementById('arizaForm');
   const BOSHQA_KOD = 'boshqa';
+  const YETTILIK_KOD = 'yettilik';
 
   /* ---------------- KIRIL -> LOTIN ---------------- */
   const KRIL_MAP = {
@@ -1305,6 +1307,11 @@
   function onSababChange(){
     const checked = Array.from(document.querySelectorAll('input[name="rad_sabablari"]:checked')).map(el => el.value);
     document.getElementById('boshqaSababField').hidden = checked.indexOf(BOSHQA_KOD) === -1;
+    // Rad holatida "mahalla yettiligi" tanlansa, xuddi tayinlangandagidek
+    // kollegal qaror raqami kerak bo'ladi (docx'da shu raqam bilan chiqadi).
+    if (document.getElementById('id_holat').value === 'rad') {
+      document.getElementById('kollegalField').hidden = checked.indexOf(YETTILIK_KOD) === -1;
+    }
   }
 
   function onKategoriyaChange(){
@@ -1317,10 +1324,11 @@
     const isRad = holat === 'rad';
     const tayinlangan = holat === 'tayinlangan';
     document.getElementById('summaField').hidden = !tayinlangan;
-    document.getElementById('kollegalField').hidden = !tayinlangan;
+    document.getElementById('kollegalField').hidden = !tayinlangan && !isRad;
     document.getElementById('sabablarBlock').hidden = !isRad;
     document.querySelector('.modal').classList.toggle('wide', isRad);
     if (!isRad) document.getElementById('boshqaSababField').hidden = true;
+    if (isRad) onSababChange();
   }
 
   /* ---------------- FORM RESET / OPEN ---------------- */

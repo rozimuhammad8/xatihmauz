@@ -62,6 +62,9 @@ class Ariza(models.Model):
     ajratilgan_summa = models.CharField(
         "Ajratilgan summa (so'm)", max_length=100, blank=True, default=""
     )
+    # holat = tayinlangan bo'lganda, YOKI holat = rad va rad sababi
+    # "mahalla yettiligi" (kod: yettilik) bo'lganda ishlatiladi — ikkalasi
+    # ham "yettilik" ning kollegial qarori hisoblanadi.
     kollegal_qaror = models.CharField(
         "Kollegal qaror raqami", max_length=100, blank=True, default="",
         help_text="Mahalla yettiligi qarorining raqami — xatda "

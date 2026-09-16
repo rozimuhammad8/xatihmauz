@@ -24,6 +24,7 @@ from .reasons import (
     HOLATLAR,
     KATEGORIYALAR,
     TASHKILOTLAR,
+    YETTILIK_KOD,
     sabablar_royxati,
 )
 
@@ -135,7 +136,15 @@ def ariza_create(request):
         if ariza.holat == "rad":
             ariza.rad_sabab_kodlari = _rad_sabab_kodlarini_olish(request, ariza.kategoriya)
             ariza.ajratilgan_summa = ""
-            ariza.kollegal_qaror = ""
+            if YETTILIK_KOD in ariza.rad_sabab_kodlari:
+                if not ariza.kollegal_qaror:
+                    messages.error(
+                        request,
+                        "\"Mahalla yettiligi\" sababi tanlanganda kollegal qaror raqami kiritilishi shart.",
+                    )
+                    return redirect("core:dashboard")
+            else:
+                ariza.kollegal_qaror = ""
         else:
             ariza.rad_sabab_kodlari = []
             ariza.boshqa_sabab_matni = ""
@@ -173,7 +182,15 @@ def ariza_edit(request, pk):
         if ariza.holat == "rad":
             ariza.rad_sabab_kodlari = _rad_sabab_kodlarini_olish(request, ariza.kategoriya)
             ariza.ajratilgan_summa = ""
-            ariza.kollegal_qaror = ""
+            if YETTILIK_KOD in ariza.rad_sabab_kodlari:
+                if not ariza.kollegal_qaror:
+                    messages.error(
+                        request,
+                        "\"Mahalla yettiligi\" sababi tanlanganda kollegal qaror raqami kiritilishi shart.",
+                    )
+                    return redirect("core:dashboard")
+            else:
+                ariza.kollegal_qaror = ""
         else:
             ariza.rad_sabab_kodlari = []
             ariza.boshqa_sabab_matni = ""

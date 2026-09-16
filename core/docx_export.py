@@ -95,7 +95,13 @@ def ariza_docx_yaratish(ariza):
     else:
         replace_in_doc(doc, replacements)
         sabablar = ariza.rad_sabablari_royxati()
-        matnlar = [f"{i + 1}) {t}" for i, (_, t) in enumerate(sabablar)] or ["Sabab ko'rsatilmagan."]
+        # "Mahalla yettiligi" sababi matnida {kollegal_qaror} bor (reasons.py) —
+        # rad_sabablari_royxati() bu matnni ariza obyektidan bilmagani uchun
+        # placeholder shu yerda to'ldiriladi (tayinlangan holatdagi kabi).
+        matnlar = [
+            f"{i + 1}) {t.replace('{kollegal_qaror}', ariza.kollegal_qaror)}"
+            for i, (_, t) in enumerate(sabablar)
+        ] or ["Sabab ko'rsatilmagan."]
         marker = find_paragraph(doc, PLACEHOLDER)
         if marker is not None:
             expand_paragraph(marker, matnlar)

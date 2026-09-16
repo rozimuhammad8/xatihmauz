@@ -763,7 +763,8 @@ class SahifalarOchiladiTest(TestCase):
 
 
 class KollegalQarorTest(TestCase):
-    """Tayinlangan xatlarda mahalla yettiligi qarori raqami."""
+    """Mahalla yettiligi qarori raqami — tayinlangan holatda, va rad etilganda
+    sababi "mahalla yettiligi" (yettilik) bo'lsa ham talab qilinadi."""
 
     def setUp(self):
         tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
@@ -816,6 +817,32 @@ class KollegalQarorTest(TestCase):
         javob = self.client_.get(reverse("core:dashboard"))
         self.assertContains(javob, "Kollegal qaror raqami")
         self.assertContains(javob, "7845754")
+
+    def test_rad_yettilik_sababida_majburiy(self):
+        javob = self._post(holat="rad", ajratilgan_summa="", kollegal_qaror="",
+                            rad_sabablari=["yettilik"])
+        self.assertEqual(Ariza.objects.count(), 0)
+        xabarlar = [str(m) for m in javob.wsgi_request._messages]
+        self.assertTrue(any("kollegal qaror" in x.lower() for x in xabarlar), xabarlar)
+
+    def test_rad_yettilik_barcha_kategoriyalarda_chiqadi(self):
+        """Tayinlangan shabloniga o'xshab, rad etilgan (mahalla yettiligi
+        sababi bilan) shablonda ham kollegal qaror raqami chiqishi kerak —
+        barcha 6 kategoriyada."""
+        from core.reasons import KATEGORIYALAR
+        for kod, nom in KATEGORIYALAR:
+            with self.subTest(kategoriya=nom):
+                javob = self._post(
+                    kategoriya=kod, holat="rad", ajratilgan_summa="",
+                    kollegal_qaror="998877", rad_sabablari=["yettilik"],
+                )
+                self.assertEqual(javob.status_code, 302)
+                ariza = Ariza.objects.latest("id")
+                self.assertEqual(ariza.kollegal_qaror, "998877")
+                buffer, _ = ariza_docx_yaratish(ariza)
+                matn = docx_matni(buffer.read())
+                self.assertIn("Kollegal qaror raqami-998877", matn)
+                self.assertNotIn("{kollegal_qaror}", matn)
 
 
 class RadXulosaTest(TestCase):

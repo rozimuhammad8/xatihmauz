@@ -24,8 +24,13 @@ FUND_LIMIT = (
 MAHALLA_YETTILIGI = (
     "462-sonli qarorga muvofiq, yordam ko'rsatish to'g'risidagi yakuniy qaror \"mahalla yettiligi\" tomonidan "
     "ko'rib chiqiladi va qabul qilinadi. Arizangiz ko'rib chiqilgach, \"mahalla yettiligi\" tomonidan yordam "
-    "berishni rad etish to'g'risida qaror qabul qilingan."
+    "berishni rad etish to'g'risida qaror qabul qilingan (Kollegal qaror raqami-{kollegal_qaror})."
 )
+
+# "Mahalla yettiligi" barcha kategoriyalarda shu kod bilan belgilangan — rad
+# etilganda ham (xuddi tayinlangandagi kabi) kollegal qaror raqami talab
+# qilinadi, chunki bu ham "yettilik" ning kollegial qarori hisoblanadi.
+YETTILIK_KOD = "yettilik"
 
 
 def _double_funding(noun):
@@ -119,7 +124,8 @@ RAD_SABABLARI = {
          "Mahalla yettiligi tomonidan o'tkazilgan o'rganish natijasiga ko'ra, uy-joyingiz ta'mirtalab holatda "
          "deb topilmagan va (yoki) ta'mirlanishi zarur bo'lgan qismlar aniq belgilanmagan. Mazkur tartibga "
          "muvofiq, yordam ko'rsatish to'g'risida qaror \"mahalla yettiligi\"ning kollegial xulosasiga asosan "
-         "qabul qilinadi. Shu sababli, ushbu turdagi yordamni tayinlash imkoni bo'lmagan."),
+         "qabul qilinadi (Kollegal qaror raqami-{kollegal_qaror}). Shu sababli, ushbu turdagi yordamni "
+         "tayinlash imkoni bo'lmagan."),
         ("mablagh", "Jamg'arma mablag'lari yetarli emas", FUND_LIMIT.replace(
             "462-sonli qarorning 2-bandiga muvofiq", "Mazkur qarorga muvofiq")),
         (BOSHQA_KOD, "Boshqa sabab (qo'lda kiritiladi)", None),
