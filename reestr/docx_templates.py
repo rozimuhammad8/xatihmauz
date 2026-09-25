@@ -122,6 +122,10 @@ def _shartlar(data):
     tasdiq = data.get("tasdiqMalumotlari") or {}
     return {
         "{?tizimSababi}": bool(rad.get("tizimSababi")),
+        "{?tanlanganSabablar}": bool(
+            rad.get("yangiAvtoRad") or rad.get("kopAvtoRad")
+            or rad.get("kochmasMulkRad") or rad.get("daromadRad")
+        ),
         "{?avtoRad}": bool(rad.get("avtoRad")),
         "{?uyRad}": bool(rad.get("uyRad")),
         "{?rasmiyRad}": bool(rad.get("rasmiyRad")),
@@ -186,6 +190,7 @@ def render_letter(data):
     oddiy["{uy_soni}"] = str(len(rad.get("uyRad") or []))
     oddiy["{rasmiy_matni}"] = dg.income_text(rad.get("rasmiyRad") or [])
     oddiy["{tizim_sababi_matni}"] = rad.get("tizimSababi") or ""
+    oddiy["{tanlangan_sabablar_matni}"] = dg.tanlangan_sabablar_matni(rad)
     replace_in_doc(doc, oddiy)
 
     buffer = io.BytesIO()

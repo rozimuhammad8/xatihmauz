@@ -45,6 +45,7 @@ P_TOLOV_SUMMASI = "{tolov_summasi}"
 P_TAYINLASH_QOSHIMCHA = "{tayinlash_qoshimcha}"
 P_QOSHIMCHA_MALUMOT = "{qoshimcha_malumot}"
 P_TIZIM_SABABI_MATNI = "{tizim_sababi_matni}"
+P_TANLANGAN_SABABLAR_MATNI = "{tanlangan_sabablar_matni}"
 
 # Dinamik ro'yxatlar — ichida qalin qismlar bo'ladi, shuning uchun oddiy matn
 # bilan emas, formatlangan segmentlar bilan almashtiriladi.
@@ -60,6 +61,7 @@ SHART_AVTO = "{?avtoRad}"
 SHART_UY = "{?uyRad}"
 SHART_RASMIY = "{?rasmiyRad}"
 SHART_TIZIM_SABABI = "{?tizimSababi}"
+SHART_TANLANGAN_SABABLAR = "{?tanlanganSabablar}"
 SHART_NORASMIY = "{?norasmiyRad}"
 SHART_UYDA_EMAS = "{?uydaEmasRad}"
 SHART_TOLOV = "{?tolov}"
@@ -106,8 +108,12 @@ def qur_rad(doc):
     ])
 
     body_paragraph(doc, [
-        (SHART_TIZIM_SABABI, {}),
-        (P_TIZIM_SABABI_MATNI, {}),
+        (SHART_TANLANGAN_SABABLAR, {}),
+        (P_TANLANGAN_SABABLAR_MATNI, {}),
+        (" sababli", {}),
+        (" sizga ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" tayinlash rad etildi.", {}),
         dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
     ])
     body_paragraph(doc, [

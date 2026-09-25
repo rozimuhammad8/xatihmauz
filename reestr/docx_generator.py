@@ -236,6 +236,49 @@ def income_text(items):
     )
 
 
+# sr-new.ihma.uz'ning o'zi rad etish sababi sifatida ishlatadigan ANIQ jumla
+# bo'laklari (Eligibility/GetBySummary -> assessment.rejectReasonText'dan
+# ko'plab haqiqiy rad etilgan arizalarni solishtirib olingan — har biri
+# turli arizalarda so'zma-so'z bir xil chiqadi, faqat qaysi kriteriylar mos
+# kelganiga qarab vergul bilan qo'shib yoziladi). Forma faqat shu 4 ta
+# tayyor sababdan (+ pastdagi "uyda bo'lmagan") birini yoki bir nechtasini
+# tanlashga imkon beradi — itemized ko'chmas mulk/avto/rasmiy daromad
+# ro'yxatlarini qo'lda kiritish shart emas.
+SABAB_YANGI_AVTO = (
+    "nomingizda rasmiylashtirilgan foydalanuvingizda ishlab chiqarilganiga "
+    "12/15 yil bo'lmagan texnik soz avtotransport vositasi mavjudligi"
+)
+SABAB_KOP_AVTO = (
+    "nomingizda rasmiylashtirilgan ikkitadan ortiq texnik soz avtotransport "
+    "vositasi mavjudligi"
+)
+SABAB_KOCHMAS_MULK = (
+    "kadastr axborot tizimida Siz va oila a'zolaringizda bittadan ortiq "
+    "ko'chmas mulk borligi, yoki bir va undan ortiq noturar joy binosi mavjudligi"
+)
+SABAB_DAROMAD = (
+    "oilaning har bir a'zosiga to'g'ri keladigan o'rtacha oylik jami daromad "
+    "belgilangan mezondan ko'pligi"
+)
+
+
+def tanlangan_sabablar_matni(rad):
+    """yangiAvtoRad/kopAvtoRad/kochmasMulkRad/daromadRad bayroqlaridan
+    tanlanganlarini bitta jumlaga (vergul bilan) birlashtiradi — xuddi
+    sr-new.ihma.uz'ning o'zi bir nechta sabab bir vaqtda chiqqanda
+    qiladiganidek."""
+    matnlar = []
+    if rad.get("yangiAvtoRad"):
+        matnlar.append(SABAB_YANGI_AVTO)
+    if rad.get("kopAvtoRad"):
+        matnlar.append(SABAB_KOP_AVTO)
+    if rad.get("kochmasMulkRad"):
+        matnlar.append(SABAB_KOCHMAS_MULK)
+    if rad.get("daromadRad"):
+        matnlar.append(SABAB_DAROMAD)
+    return ", ".join(matnlar)
+
+
 def rad_xulosa_segments(data):
     """Har bir rad sababining oxiriga qo'shiladigan umumiy xulosa.
 

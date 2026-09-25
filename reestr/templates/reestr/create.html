@@ -76,7 +76,7 @@
   .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--text-1)}
   .field .hint{display:block;font-size:11px;color:var(--text-3);margin-top:4px}
   .field input[type=text],.field input[type=number]{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;transition:.15s}
-  .reason-content textarea{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;resize:vertical}
+  .field textarea{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;resize:vertical}
   .field input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
 
   .csel{position:relative}
@@ -115,24 +115,10 @@
   .cal-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);text-align:center}
   .cal-today-btn{border:none;background:none;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 
-  .reason{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;background:var(--main-bg);margin-bottom:10px}
-  .reason-head{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600}
-  .reason-head input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
-  .reason-content{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
-  .reason-content.show{display:block}
-  .dynamic-item{position:relative;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px}
-  .dynamic-item .item-number{font-size:12.5px;font-weight:700;color:var(--text-2);margin-bottom:10px}
-  .dynamic-item .remove-btn{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--main-bg);color:var(--danger);cursor:pointer;font-size:13px;line-height:1}
-  .dynamic-item .remove-btn:hover{background:var(--danger-soft)}
-  .dyn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .dyn-grid.cols-3{grid-template-columns:repeat(3,1fr)}
-  .dyn-grid.cols-4{grid-template-columns:repeat(2,1fr)}
-  @media (max-width:520px){.dyn-grid,.dyn-grid.cols-3,.dyn-grid.cols-4{grid-template-columns:1fr}}
-  .dyn-grid .field label{font-size:11.5px}
-  .add-btn{border:1.5px dashed var(--border);background:#fff;color:var(--text-2);border-radius:var(--radius-sm);padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:.15s}
-  .add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
   .isqayta{display:flex;gap:18px;margin-bottom:14px}
+  .checkbox-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;background:var(--main-bg);margin-bottom:10px}
+  .checkbox-row input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
   .radio-opt{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;cursor:pointer}
   .radio-opt input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
 
@@ -238,50 +224,27 @@
   <!-- RAD -->
   <div class="card conditional-fields show" id="radFields">
     <h3>Rad etish sabablari</h3>
-    <p class="sub">Kamida bittasini tanlang</p>
+    <p class="sub">Kamida bittasini tanlang — matnlar sr-new.ihma.uz tizimidagi aynan shu sabablar bilan rad etilgan arizalardan olingan</p>
 
     <div class="isqayta">
       <label class="radio-opt"><input type="radio" name="isQayta" value="true" id="isQaytaHa">Ha (qayta o'rganilganda)</label>
       <label class="radio-opt"><input type="radio" name="isQayta" value="false" id="isQaytaYoq" checked>Yo'q (o'rganilganda)</label>
     </div>
 
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="tizimSababiToggle" name="tizimSababiToggle">Tizim tomonidan aniqlangan sabab</label>
-      <div class="reason-content" id="tizimSababiContent">
-        <textarea id="tizimSababiMatni" name="tizimSababiMatni" rows="3" placeholder="Masalan: Sizning tizim orqali yuborgan arizangiz, oilaning har bir a'zosiga to'g'ri keladigan o'rtacha oylik jami daromad belgilangan mezondan ko'pligi sababli rad etildi."></textarea>
-      </div>
-    </div>
+    <label class="checkbox-row"><input type="checkbox" id="yangiAvtoRad" name="yangiAvtoRad">Yangi avtomobil mavjud (12/15 yildan kichik)</label>
+    <label class="checkbox-row"><input type="checkbox" id="kopAvtoRad" name="kopAvtoRad">Bir nechta avtomobil mavjud (2 tadan ortiq)</label>
+    <label class="checkbox-row"><input type="checkbox" id="kochmasMulkRad" name="kochmasMulkRad">Ortiqcha ko'chmas mulk mavjud</label>
+    <label class="checkbox-row"><input type="checkbox" id="daromadRad" name="daromadRad">Rasmiy daromad me'yordan yuqori</label>
+    <label class="checkbox-row"><input type="checkbox" id="uydaEmasRad" name="uydaEmasRad">Uyda bo'lmagan</label>
+  </div>
 
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="uydaEmasRad" name="uydaEmasRad">Uyda bo'lmagan</label>
-    </div>
-
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="uyRadToggle" name="uyRadToggle">Ko'chmas mulk mavjud</label>
-      <div class="reason-content" id="uyRadContent">
-        <div id="uyRadContainer"></div>
-        <button type="button" class="add-btn" id="addUyRad">+ Ko'chmas mulk qo'shish</button>
-      </div>
-    </div>
-
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="avtoRadToggle" name="avtoRadToggle">Avtomobil mavjud</label>
-      <div class="reason-content" id="avtoRadContent">
-        <div id="avtoRadContainer"></div>
-        <button type="button" class="add-btn" id="addAvtoRad">+ Avtomobil qo'shish</button>
-      </div>
-    </div>
-
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="rasmiyRadToggle" name="rasmiyRadToggle">Rasmiy daromad mavjud</label>
-      <div class="reason-content" id="rasmiyRadContent">
-        <div id="rasmiyRadContainer"></div>
-        <button type="button" class="add-btn" id="addRasmiyRad">+ Daromad qo'shish</button>
-      </div>
-    </div>
-
-    <div class="reason">
-      <label class="reason-head"><input type="checkbox" id="norasmiyRad" name="norasmiyRad">Norasmiy daromad mavjud</label>
+  <!-- TO'XTATILGAN -->
+  <div class="card conditional-fields" id="toxtatilganFields">
+    <h3>To'lovni to'xtatish sababi</h3>
+    <p class="sub">Tizim tomonidan aniqlangan sabab matnini kiriting</p>
+    <div class="field">
+      <label>Sabab matni *</label>
+      <textarea id="tizimSababiMatni" name="tizimSababiMatni" rows="4" placeholder="Masalan: Sizning tizim orqali yuborgan arizangiz, oilada 6 oy davomida bandligi ta'minlanmagani sababli to'lovingiz to'xtatildi."></textarea>
     </div>
   </div>
 
@@ -390,14 +353,6 @@
     if (!str) return '';
     str = str.trim().replace(/\s+/g, ' ');
     return str.toLowerCase().replace(/(^|[.\s])([a-zʻʼ])/g, (m, sep, c) => sep + c.toUpperCase());
-  }
-  function toSentenceCase(str){
-    if (!str) return '';
-    str = str.toLowerCase();
-    const m = str.match(/[a-zʻʼ]/);
-    if (!m) return str;
-    const i = m.index;
-    return str.slice(0, i) + str[i].toUpperCase() + str.slice(i + 1);
   }
   function getVal(id){ return krilToLotin((document.getElementById(id).value || '').trim()); }
   function getCheck(id){ return document.getElementById(id).checked || false; }
@@ -544,7 +499,7 @@
   /* ---------------- TEMPLATE SELECTOR ---------------- */
   const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat', 'arizaKiritilmagan'];
   const fieldMap = {
-    rad: 'radFields', toxtatilgan: 'radFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
+    rad: 'radFields', toxtatilgan: 'toxtatilganFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
     muddat: 'muddatFields', arizaKiritilgan: 'arizaKiritilganFields',
     arizaKiritilmagan: 'arizaKiritilmaganFields',
   };
@@ -555,8 +510,6 @@
     document.querySelectorAll('.tpl-opt').forEach(el => el.classList.toggle('active', el.dataset.template === tpl));
     document.querySelectorAll('.conditional-fields').forEach(el => el.classList.toggle('show', el.id === fieldMap[tpl]));
     document.getElementById('arizaInfoGrid').style.display = TEMPLATES_WITHOUT_ARIZA_INFO.includes(tpl) ? 'none' : 'grid';
-    document.querySelector('#radFields h3').textContent =
-      tpl === 'toxtatilgan' ? "To'lovni to'xtatish sababi" : "Rad etish sabablari";
   }
   document.querySelectorAll('.tpl-opt').forEach(el => {
     el.addEventListener('click', () => selectTemplate(el.dataset.template));
@@ -676,94 +629,6 @@
   document.getElementById('murojaatVaqti').addEventListener('change', function(){ if (this.value) murojaatVaqtiPicker.setValue(this.value); });
   document.getElementById('arizaVaqti').addEventListener('change', function(){ if (this.value) arizaVaqtiPicker.setValue(this.value); });
 
-  /* ---------------- DINAMIK GURUHLAR (uyRad / avtoRad / rasmiyRad) ---------------- */
-  let uyRadCount = 0, avtoRadCount = 0, rasmiyRadCount = 0;
-  const labels = { uyRad: "Ko'chmas mulk", avtoRad: "Avtomobil", rasmiyRad: "Daromad" };
-
-  function addUyRad(prefill){
-    uyRadCount++;
-    const div = document.createElement('div');
-    div.className = 'dynamic-item';
-    div.innerHTML = `
-      <button type="button" class="remove-btn" data-remove="uyRad">&times;</button>
-      <div class="item-number">Ko'chmas mulk #${uyRadCount}</div>
-      <div class="dyn-grid">
-        <div class="field"><label>Uy manzili</label><input type="text" class="uyRad-manzil" placeholder="Anisiy ko'chasi, 20-xonadon"></div>
-        <div class="field"><label>Kadastr raqami</label><input type="text" class="uyRad-kadastr" placeholder="17:20:325:42-1004:20"></div>
-      </div>`;
-    document.getElementById('uyRadContainer').appendChild(div);
-    if (prefill){ div.querySelector('.uyRad-manzil').value = prefill.uyManzil || ''; div.querySelector('.uyRad-kadastr').value = prefill.uyKadastr || ''; }
-  }
-  function addAvtoRad(prefill){
-    avtoRadCount++;
-    const div = document.createElement('div');
-    div.className = 'dynamic-item';
-    div.innerHTML = `
-      <button type="button" class="remove-btn" data-remove="avtoRad">&times;</button>
-      <div class="item-number">Avtomobil #${avtoRadCount}</div>
-      <div class="dyn-grid cols-3">
-        <div class="field"><label>Yili</label><input type="text" class="avtoRad-yil" placeholder="2017"></div>
-        <div class="field"><label>Rusumi</label><input type="text" class="avtoRad-model" placeholder="Damas"></div>
-        <div class="field"><label>Davlat raqami</label><input type="text" class="avtoRad-raqam" placeholder="60S342DB"></div>
-      </div>`;
-    document.getElementById('avtoRadContainer').appendChild(div);
-    if (prefill){ div.querySelector('.avtoRad-yil').value = prefill.avtoYil || ''; div.querySelector('.avtoRad-model').value = prefill.avtoModel || ''; div.querySelector('.avtoRad-raqam').value = prefill.avtoRaqam || ''; }
-  }
-  function addRasmiyRad(prefill){
-    rasmiyRadCount++;
-    const div = document.createElement('div');
-    div.className = 'dynamic-item';
-    div.innerHTML = `
-      <button type="button" class="remove-btn" data-remove="rasmiyRad">&times;</button>
-      <div class="item-number">Daromad #${rasmiyRadCount}</div>
-      <div class="dyn-grid cols-4">
-        <div class="field"><label>Egasi</label><input type="text" class="rasmiyRad-egasi" placeholder="Mullajonov Rozivoy"></div>
-        <div class="field"><label>Miqdori (so'm)</label><input type="text" class="rasmiyRad-miqdori" placeholder="2450999"></div>
-        <div class="field"><label>Tashkilot</label><input type="text" class="rasmiyRad-tashkilot" placeholder="Maktabgacha talim muasasi"></div>
-        <div class="field"><label>Davri</label><input type="text" class="rasmiyRad-davri" placeholder="2026, Mart"></div>
-      </div>`;
-    document.getElementById('rasmiyRadContainer').appendChild(div);
-    if (prefill){
-      div.querySelector('.rasmiyRad-egasi').value = prefill.egasi || '';
-      div.querySelector('.rasmiyRad-miqdori').value = prefill.miqdori || '';
-      div.querySelector('.rasmiyRad-tashkilot').value = prefill.tashkilot || '';
-      div.querySelector('.rasmiyRad-davri').value = prefill.davri || '';
-    }
-  }
-  function renumberItems(type){
-    const containerId = type + 'Container';
-    const items = document.querySelectorAll(`#${containerId} .dynamic-item`);
-    items.forEach((item, i) => { item.querySelector('.item-number').textContent = `${labels[type]} #${i+1}`; });
-  }
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-remove]');
-    if (!btn) return;
-    const type = btn.dataset.remove;
-    if (!confirm("Ushbu ma'lumotni o'chirmoqchimisiz?")) return;
-    btn.closest('.dynamic-item').remove();
-    if (type === 'uyRad') uyRadCount--; else if (type === 'avtoRad') avtoRadCount--; else if (type === 'rasmiyRad') rasmiyRadCount--;
-    renumberItems(type);
-  });
-  document.getElementById('addUyRad').addEventListener('click', () => addUyRad());
-  document.getElementById('addAvtoRad').addEventListener('click', () => addAvtoRad());
-  document.getElementById('addRasmiyRad').addEventListener('click', () => addRasmiyRad());
-
-  document.getElementById('tizimSababiToggle').addEventListener('change', function(){
-    document.getElementById('tizimSababiContent').classList.toggle('show', this.checked);
-  });
-  document.getElementById('uyRadToggle').addEventListener('change', function(){
-    document.getElementById('uyRadContent').classList.toggle('show', this.checked);
-    if (this.checked && uyRadCount === 0) addUyRad();
-  });
-  document.getElementById('avtoRadToggle').addEventListener('change', function(){
-    document.getElementById('avtoRadContent').classList.toggle('show', this.checked);
-    if (this.checked && avtoRadCount === 0) addAvtoRad();
-  });
-  document.getElementById('rasmiyRadToggle').addEventListener('change', function(){
-    document.getElementById('rasmiyRadContent').classList.toggle('show', this.checked);
-    if (this.checked && rasmiyRadCount === 0) addRasmiyRad();
-  });
-
   /* ---------------- MA'LUMOT YIG'ISH ---------------- */
   function collectData(){
     const isQaytaEl = document.querySelector('input[name="isQayta"]:checked');
@@ -782,27 +647,16 @@
       tasdiqMalumotlari: { is:false, tasdiqSanasi:'', tolovSanasi:'', tolovSum:'', hisobRaqami:'' },
     };
 
-    if (currentTemplate === 'rad' || currentTemplate === 'toxtatilgan'){
+    if (currentTemplate === 'rad'){
       data.radSabablari = {
-        tizimSababi: getVal('tizimSababiMatni'),
+        yangiAvtoRad: getCheck('yangiAvtoRad'),
+        kopAvtoRad: getCheck('kopAvtoRad'),
+        kochmasMulkRad: getCheck('kochmasMulkRad'),
+        daromadRad: getCheck('daromadRad'),
         uydaEmasRad: getCheck('uydaEmasRad'),
-        norasmiyRad: getCheck('norasmiyRad'),
-        uyRad: Array.from(document.querySelectorAll('#uyRadContainer .dynamic-item')).map(item => ({
-          uyManzil: krilToLotin(item.querySelector('.uyRad-manzil').value.trim()),
-          uyKadastr: item.querySelector('.uyRad-kadastr').value.trim(),
-        })),
-        avtoRad: Array.from(document.querySelectorAll('#avtoRadContainer .dynamic-item')).map(item => ({
-          avtoYil: item.querySelector('.avtoRad-yil').value.trim(),
-          avtoModel: krilToLotin(item.querySelector('.avtoRad-model').value.trim()),
-          avtoRaqam: item.querySelector('.avtoRad-raqam').value.trim(),
-        })),
-        rasmiyRad: Array.from(document.querySelectorAll('#rasmiyRadContainer .dynamic-item')).map(item => ({
-          egasi: krilToLotin(toSentenceCase(item.querySelector('.rasmiyRad-egasi').value.trim())),
-          miqdori: item.querySelector('.rasmiyRad-miqdori').value.trim(),
-          tashkilot: krilToLotin(toSentenceCase(item.querySelector('.rasmiyRad-tashkilot').value.trim())),
-          davri: krilToLotin(item.querySelector('.rasmiyRad-davri').value.trim()),
-        })),
       };
+    } else if (currentTemplate === 'toxtatilgan'){
+      data.radSabablari = { tizimSababi: getVal('tizimSababiMatni') };
     } else if (currentTemplate === 'tasdiqlandi'){
       data.tasdiqMalumotlari = { is:true, tasdiqSanasi:getVal('tasdiqSanasi'), tolovSanasi:getVal('tolovSanasi'), tolovSum:getVal('tolovSum'), hisobRaqami:getVal('hisobRaqami') };
     } else if (currentTemplate === 'tayinlandi'){
@@ -830,14 +684,13 @@
       if (!data.arizaMaqsadi) errors.push("Ariza maqsadini tanlang!");
     }
 
-    if (data.template === 'rad' || data.template === 'toxtatilgan'){
+    if (data.template === 'rad'){
       const rad = data.radSabablari;
-      const hasReason = rad.tizimSababi || rad.uydaEmasRad || rad.norasmiyRad || rad.uyRad.length>0 || rad.avtoRad.length>0 || rad.rasmiyRad.length>0;
+      const hasReason = rad.yangiAvtoRad || rad.kopAvtoRad || rad.kochmasMulkRad || rad.daromadRad || rad.uydaEmasRad;
       if (!hasReason) errors.push("Kamida bitta rad etish sababini tanlang!");
-      if (getCheck('tizimSababiToggle') && !rad.tizimSababi) errors.push('"Tizim tomonidan aniqlangan sabab" tanlangan, lekin matn kiritilmagan!');
-      if (getCheck('uyRadToggle') && rad.uyRad.length===0) errors.push('"Ko\'chmas mulk" tanlangan, lekin hech qanday mulk qo\'shilmagan!');
-      if (getCheck('avtoRadToggle') && rad.avtoRad.length===0) errors.push('"Avtomobil" tanlangan, lekin hech qanday avtomobil qo\'shilmagan!');
-      if (getCheck('rasmiyRadToggle') && rad.rasmiyRad.length===0) errors.push('"Rasmiy daromad" tanlangan, lekin hech qanday daromad qo\'shilmagan!');
+    }
+    if (data.template === 'toxtatilgan'){
+      if (!data.radSabablari.tizimSababi) errors.push("Sabab matnini kiriting!");
     }
     if (data.template === 'tasdiqlandi'){
       const t = data.tasdiqMalumotlari;
@@ -902,30 +755,15 @@
     document.getElementById('isQaytaHa').checked = !!d.isQayta;
     document.getElementById('isQaytaYoq').checked = !d.isQayta;
 
-    if ((d.template === 'rad' || d.template === 'toxtatilgan') && d.radSabablari){
+    if (d.template === 'rad' && d.radSabablari){
       const rad = d.radSabablari;
-      if (rad.tizimSababi){
-        document.getElementById('tizimSababiToggle').checked = true;
-        document.getElementById('tizimSababiContent').classList.add('show');
-        document.getElementById('tizimSababiMatni').value = rad.tizimSababi;
-      }
+      document.getElementById('yangiAvtoRad').checked = !!rad.yangiAvtoRad;
+      document.getElementById('kopAvtoRad').checked = !!rad.kopAvtoRad;
+      document.getElementById('kochmasMulkRad').checked = !!rad.kochmasMulkRad;
+      document.getElementById('daromadRad').checked = !!rad.daromadRad;
       document.getElementById('uydaEmasRad').checked = !!rad.uydaEmasRad;
-      document.getElementById('norasmiyRad').checked = !!rad.norasmiyRad;
-      if (rad.uyRad && rad.uyRad.length){
-        document.getElementById('uyRadToggle').checked = true;
-        document.getElementById('uyRadContent').classList.add('show');
-        rad.uyRad.forEach(it => addUyRad(it));
-      }
-      if (rad.avtoRad && rad.avtoRad.length){
-        document.getElementById('avtoRadToggle').checked = true;
-        document.getElementById('avtoRadContent').classList.add('show');
-        rad.avtoRad.forEach(it => addAvtoRad(it));
-      }
-      if (rad.rasmiyRad && rad.rasmiyRad.length){
-        document.getElementById('rasmiyRadToggle').checked = true;
-        document.getElementById('rasmiyRadContent').classList.add('show');
-        rad.rasmiyRad.forEach(it => addRasmiyRad(it));
-      }
+    } else if (d.template === 'toxtatilgan' && d.radSabablari){
+      document.getElementById('tizimSababiMatni').value = d.radSabablari.tizimSababi || '';
     } else if (d.template === 'tasdiqlandi' && d.tasdiqMalumotlari){
       document.getElementById('tasdiqSanasi').value = d.tasdiqMalumotlari.tasdiqSanasi || '';
       document.getElementById('tolovSanasi').value = d.tasdiqMalumotlari.tolovSanasi || '';

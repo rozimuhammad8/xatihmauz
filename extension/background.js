@@ -222,9 +222,17 @@ function fillLetterForm(payload) {
     el.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
   }
+  function setCheck(id, value) {
+    const el = document.getElementById(id);
+    if (!el || !value) return false;
+    el.checked = true;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
 
   const filled = {
-    arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false, tizimSababi: false,
+    arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false,
+    tizimSababi: false, yangiAvtoRad: false, kopAvtoRad: false, kochmasMulkRad: false, daromadRad: false,
   };
 
   filled.arizaID = setVal("arizaID", payload.arizaID);
@@ -240,16 +248,17 @@ function fillLetterForm(payload) {
     }
   }
 
-  // "Rad etish" / "To'lov to'xtatilgan" — bitta tayyor sabab matni (tizim
-  // o'zi hisoblab bergan xulosa), eski itemized ko'chmas mulk/avto/rasmiy
-  // daromad ro'yxatlari o'rniga (qarang: reestr/templates/reestr/create.html
-  // "Tizim tomonidan aniqlangan sabab" bo'limi).
-  if (payload.tizimSababi) {
-    const toggle = document.getElementById("tizimSababiToggle");
-    if (toggle && !toggle.checked) {
-      toggle.checked = true;
-      toggle.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+  // "Rad etish" — checkboxlar orqali (qarang: runRadFill/CRITERION_TO_CHECKBOX).
+  // Matnning o'zi Django tomonida qattiq yozilgan, shuning uchun bu yerda
+  // faqat mos katakcha belgilanadi.
+  filled.yangiAvtoRad = setCheck("yangiAvtoRad", payload.yangiAvtoRad);
+  filled.kopAvtoRad = setCheck("kopAvtoRad", payload.kopAvtoRad);
+  filled.kochmasMulkRad = setCheck("kochmasMulkRad", payload.kochmasMulkRad);
+  filled.daromadRad = setCheck("daromadRad", payload.daromadRad);
+
+  // "To'lov to'xtatilgan" — bitta tayyor sabab matni (tizim o'zi hisoblab
+  // bergan xulosa) erkin matn maydoniga qo'yiladi (qarang: runToxtatilganFill).
+  if (payload.tizimSababi !== undefined) {
     filled.tizimSababi = setVal("tizimSababiMatni", payload.tizimSababi);
   }
 
@@ -334,41 +343,83 @@ async function runCommonFieldsFill(template, letterTabId, registration) {
   return { template, payload, fillReport };
 }
 
-// "Rad etish" va "To'lov to'xtatilgan" — ikkalasi ham bitta tayyor sabab
-// matnini (tizimning moslik baholash xulosasi, assessment.rejectReasonText)
-// oladi va Django formasidagi "Tizim tomonidan aniqlangan sabab" maydoniga
-// qo'yadi. Eski itemized (ko'chmas mulk/avto/rasmiy daromad) ro'yxatlari
-// endi qurilmaydi — sr-new.ihma.uz'da bunga mos ~20 xil manba bor va
-// ularning huquqiy tasnifi aniq emas, shuning uchun tizim o'zi tayyorlagan
-// bitta jumla ishlatiladi (qarang: reestr/shablon_qurish.py qur_rad).
-async function runRadFill(template, id, letterTabId, registration, statusCode, token) {
+// Joriy (isCurrent) baholash xulosasini (Eligibility/GetBySummary) o'qiydi —
+// "rad" va "toxtatilgan" ikkalasi ham shu manbadan foydalanadi, faqat undan
+// olingan ma'lumotni har biri boshqacha ishlatadi (pastga qarang).
+async function fetchCurrentSummary(id, token) {
+  const revisions = await apiFetch(
+    `${API_BASE}/Eligibility/GetRevisionsByApplication?applicationId=${encodeURIComponent(id)}`,
+    token
+  );
+  const current = (revisions || []).find((r) => r.isCurrent) || (revisions || [])[0];
+  if (!current) return null;
+  return apiFetch(
+    `${API_BASE}/Eligibility/GetBySummary?applicationId=${encodeURIComponent(id)}&summaryId=${current.id}`,
+    token
+  );
+}
+
+// household.checks[] dagi (passed:false) kriteriy kodini Django formasidagi
+// checkbox id'siga moslashtiradi. Har bir checkbox uchun ANIQ matn
+// reestr/docx_generator.py (SABAB_YANGI_AVTO/SABAB_KOP_AVTO/...) da qattiq
+// yozilgan — o'sha matnlar sr-new.ihma.uz'ning bir qancha haqiqiy rad
+// etilgan arizasidan (rejectReasonText) olingan, so'zma-so'z bir xil chiqadi.
+const CRITERION_TO_CHECKBOX = {
+  HH_NEW_VEHICLES_CHECK: "yangiAvtoRad",
+  HH_VEHICLES_CHECK: "kopAvtoRad",
+  HH_PROPERTIES_CHECK: "kochmasMulkRad",
+  HH_INCOME_CHECK: "daromadRad",
+};
+
+// "Rad etish" — erkin matn emas, checkboxlar orqali ishlaydi: sr-new.ihma.uz
+// javobidagi har bir mos tushgan (passed:false) kriteriy uchun mos
+// checkbox belgilanadi, matnning o'zi Django tomonida allaqachon tayyor
+// (qarang: CRITERION_TO_CHECKBOX yuqorida). "Uyda bo'lmagan" avtomatik
+// aniqlanmaydi — xodim o'zi belgilaydi (sr-new'da bunga mos kriteriy yo'q).
+async function runRadFill(id, letterTabId, registration, statusCode, token) {
   const payload = {
     ...commonLetterPayload(registration),
     isQayta: statusCode === "RECHECK_REJECTED",
-    tizimSababi: "",
+    yangiAvtoRad: false,
+    kopAvtoRad: false,
+    kochmasMulkRad: false,
+    daromadRad: false,
   };
 
   try {
-    const revisions = await apiFetch(
-      `${API_BASE}/Eligibility/GetRevisionsByApplication?applicationId=${encodeURIComponent(id)}`,
-      token
-    );
-    const current = (revisions || []).find((r) => r.isCurrent) || (revisions || [])[0];
-    if (current) {
-      const summary = await apiFetch(
-        `${API_BASE}/Eligibility/GetBySummary?applicationId=${encodeURIComponent(id)}&summaryId=${current.id}`,
-        token
-      );
-      payload.tizimSababi = (summary && summary.assessment && summary.assessment.rejectReasonText) || "";
-    }
+    const summary = await fetchCurrentSummary(id, token);
+    const checks = (summary && summary.household && summary.household.checks) || [];
+    checks.forEach((c) => {
+      const field = CRITERION_TO_CHECKBOX[c.code];
+      if (field && c.passed === false) payload[field] = true;
+    });
   } catch (err) {
-    // Sabab matnini olib bo'lmasa ham, umumiy maydonlar (ariza raqami/
-    // maqsadi/sanasi) baribir to'ldiriladi — xodim sabab matnini qo'lda
-    // yozadi (popup shu holatni alohida ko'rsatadi).
+    // Sabablarni olib bo'lmasa ham, umumiy maydonlar (ariza raqami/maqsadi/
+    // sanasi) baribir to'ldiriladi — xodim kerakli katakchani qo'lda
+    // belgilaydi (popup shu holatni alohida ko'rsatadi).
   }
 
   const fillReport = await fillLetterCommonFields(letterTabId, payload);
-  return { template, payload, fillReport };
+  return { template: "rad", payload, fillReport };
+}
+
+// "To'lov to'xtatilgan" — sr-new.ihma.uz'da hali doimiy kriteriy-checkbox
+// xaritasi yo'q (sabablar juda xilma-xil: bandlik, so'rovnoma va h.k.),
+// shuning uchun bu shablon hamon tizimning tayyor jumlasini
+// (assessment.rejectReasonText) to'g'ridan-to'g'ri erkin matn maydoniga
+// qo'yadi (qarang: reestr/templates/reestr/create.html "toxtatilganFields").
+async function runToxtatilganFill(id, letterTabId, registration, token) {
+  const payload = { ...commonLetterPayload(registration), tizimSababi: "" };
+
+  try {
+    const summary = await fetchCurrentSummary(id, token);
+    payload.tizimSababi = (summary && summary.assessment && summary.assessment.rejectReasonText) || "";
+  } catch (err) {
+    // Sabab matnini olib bo'lmasa ham, umumiy maydonlar baribir to'ldiriladi.
+  }
+
+  const fillReport = await fillLetterCommonFields(letterTabId, payload);
+  return { template: "toxtatilgan", payload, fillReport };
 }
 
 // sr-new'dan kelgan holatga qarab qaysi xat shabloni mosligini aniqlaydi.
@@ -423,8 +474,11 @@ async function runSmartFill(id) {
     );
   }
 
-  if (template === "rad" || template === "toxtatilgan") {
-    return runRadFill(template, id, letterTabId, registration, statusCode, token);
+  if (template === "rad") {
+    return runRadFill(id, letterTabId, registration, statusCode, token);
+  }
+  if (template === "toxtatilgan") {
+    return runToxtatilganFill(id, letterTabId, registration, token);
   }
   return runCommonFieldsFill(template, letterTabId, registration);
 }

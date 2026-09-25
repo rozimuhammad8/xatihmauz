@@ -17,6 +17,15 @@ const TEMPLATE_NOMLARI = {
   arizaKiritilgan: "Ariza kiritilgan",
 };
 
+// "Rad etish" uchun avtomatik belgilanadigan checkbox'lar — matnning o'zi
+// Django tomonida qattiq yozilgan (qarang: reestr/docx_generator.py).
+const RAD_SABAB_NOMLARI = {
+  yangiAvtoRad: "Yangi avtomobil",
+  kopAvtoRad: "Bir nechta avtomobil",
+  kochmasMulkRad: "Ortiqcha ko'chmas mulk",
+  daromadRad: "Rasmiy daromad",
+};
+
 function describeFillResult(message) {
   const nom = TEMPLATE_NOMLARI[message.template];
   if (!nom) {
@@ -34,13 +43,18 @@ function describeFillResult(message) {
   if (filled.arizaVaqti) parts.push("Ariza sanasi");
   if (filled.isQayta) parts.push("Holat");
   if (filled.tizimSababi) parts.push("Sabab matni");
+  const radSabablari = Object.keys(RAD_SABAB_NOMLARI).filter((k) => filled[k]);
+  radSabablari.forEach((k) => parts.push(RAD_SABAB_NOMLARI[k]));
 
   if (!parts.length) {
     return { text: `Reestr tizimi (${nom}) ochildi, lekin hech qanday mos ma'lumot topilmadi.`, isError: true };
   }
 
   let ogohlantirish = "";
-  if ((message.template === "rad" || message.template === "toxtatilgan") && !filled.tizimSababi) {
+  if (message.template === "rad" && !radSabablari.length) {
+    ogohlantirish = " Avtomatik aniqlangan sabab topilmadi — kerakli katakchani (masalan \"Uyda bo'lmagan\") qo'lda belgilang.";
+  }
+  if (message.template === "toxtatilgan" && !filled.tizimSababi) {
     ogohlantirish = " Sabab matni topilmadi — qo'lda kiriting.";
   }
   if (message.template === "tasdiqlandi") {

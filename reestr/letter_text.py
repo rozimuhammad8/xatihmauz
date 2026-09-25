@@ -57,9 +57,12 @@ def rad_paragraphs(data):
         ("o'rganilganda quydagilar sababli rad etildi:", {}),
     ]))
 
-    if rad.get("tizimSababi"):
+    tanlangan_matn = dg.tanlangan_sabablar_matni(rad)
+    if tanlangan_matn:
         paras.append(_p([
-            (rad["tizimSababi"], {}),
+            (tanlangan_matn, {}),
+            (" sababli", {}),
+        ] + dg.rad_xulosa_segments(data) + [
             dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
         ]))
     if rad.get("avtoRad"):
