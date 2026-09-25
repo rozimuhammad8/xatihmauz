@@ -102,11 +102,10 @@ Shablons/         # tahrirlangan .docx shablonlar
 
 1. Chrome → `chrome://extensions` → **Developer mode** yoqing
 2. **Load unpacked** → `extension/` papkasini tanlang
-3. Kengaytma belgisini bosing → **Server manzili** bo'limini oching →
-   Reestr tizimi manzilini yozing (masalan `https://ihma.uz`) → **Saqlash**
 
-Manzil kengaytma ichida saqlanadi — fayllarni tahrirlash shart emas. Yangi
-manzilga birinchi marta saqlaganda Chrome ruxsat so'raydi.
+Reestr tizimi manzili endi sozlash talab qilmaydi — kengaytma doim
+`https://xatihmauz.pythonanywhere.com` ga to'ldiradi (kodda qattiq yozilgan:
+`extension/background.js` dagi `LETTER_HOST`).
 
 Ishlatish: `sr-new.ihma.uz` da arizani oching → kengaytma belgisini bosing →
 **To'ldirish**. Shablon ariza holatiga (`statusId`) qarab avtomatik tanlanadi.

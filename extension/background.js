@@ -1,7 +1,10 @@
 // REG_HOST/API_BASE — haqiqiy tizim (sr-new.ihma.uz), faqat o'qish uchun.
-// Reestr tizimi (o'zimizning Django ilovamiz) manzili esa kodda qattiq
-// yozilmagan: u chrome.storage'da saqlanadi va popup orqali o'zgartiriladi.
-const DEFAULT_LETTER_HOST = "https://xatihmauz.pythonanywhere.com";
+// Reestr tizimi (o'zimizning Django ilovamiz) manzili har doim shu — endi
+// sozlanmaydi (avval popup orqali o'zgartirish mumkin edi, lekin bu ikki
+// faylda ikkita mustaqil DEFAULT_LETTER_HOST doimiysi orqali amalga
+// oshirilgan edi va ular mos kelmay qolgan holat haqiqiy xatoga sabab
+// bo'lgan — shuning uchun endi bitta qattiq yozilgan manzil ishlatiladi).
+const LETTER_HOST = "https://xatihmauz.pythonanywhere.com";
 const REG_HOST = "https://sr-new.ihma.uz";
 
 // Xat yaratish sahifasi "/reestr/create/" (Django URL tuzilishi:
@@ -13,19 +16,12 @@ const LETTER_CREATE_PATH = "/reestr/create";
 // Django login sahifasi — bu yerga tushib qolsak, xodim tizimga kirmagan.
 const LETTER_LOGIN_PATH = "/login";
 
-async function getLetterHost() {
-  try {
-    const saqlangan = await chrome.storage.sync.get("letterHost");
-    return (saqlangan.letterHost || DEFAULT_LETTER_HOST).replace(/\/+$/, "");
-  } catch {
-    return DEFAULT_LETTER_HOST;
-  }
-}
-
-async function getLetterOrigin() {
-  const u = new URL(await getLetterHost());
-  return { hostname: u.hostname, port: u.port, protocol: u.protocol };
-}
+const LETTER_ORIGIN_URL = new URL(LETTER_HOST);
+const LETTER_ORIGIN = {
+  hostname: LETTER_ORIGIN_URL.hostname,
+  port: LETTER_ORIGIN_URL.port,
+  protocol: LETTER_ORIGIN_URL.protocol,
+};
 
 const REG_ORIGIN_URL = new URL(REG_HOST);
 const REG_ORIGIN = { hostname: REG_ORIGIN_URL.hostname, port: REG_ORIGIN_URL.port };
@@ -35,7 +31,16 @@ const API_BASE = `${REG_HOST}/api`;
 // har bir so'rov shu muddatdan keyin bekor qilinadi.
 const API_TIMEOUT_MS = 20000;
 
-function waitForTabComplete(tabId, timeoutMs = 20000) {
+// `checkAlreadyComplete=true` (standart) — agar tab AVVALDAN "complete"
+// holatida bo'lsa, darhol qaytadi (findOrOpenTab uchun to'g'ri: allaqachon
+// yuklangan tabni qayta kutish shart emas). `false` esa shu tekshiruvni
+// o'tkazib yuboradi va faqat KEYINGI "complete" hodisasini kutadi — bu
+// chrome.tabs.reload() dan KEYIN kerak: reload chaqirilgan zahoti tab
+// holatini so'rasak, u hali ESKI "complete" holatida qolgan bo'lishi mumkin
+// (yangi yuklanish hali "loading"ga o'tmagan), shu sababli darhol (noto'g'ri)
+// qaytib ketardi — aynan shu sabab tokenni yangilash birinchi urinishda
+// ishlamay qoldi.
+function waitForTabComplete(tabId, timeoutMs = 20000, checkAlreadyComplete = true) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
@@ -50,6 +55,8 @@ function waitForTabComplete(tabId, timeoutMs = 20000) {
       }
     }
     chrome.tabs.onUpdated.addListener(listener);
+
+    if (!checkAlreadyComplete) return;
 
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError) return;
@@ -128,6 +135,43 @@ async function findOpenRegistrationApplicationId() {
   return matches[0].id;
 }
 
+// sr-new.ihma.uz'ning access-token cookie'si taxminan 8 soatdan keyin
+// tugaydi, lekin sahifaning o'zi buni FAQAT to'liq qayta yuklanganda
+// (RefreshToken so'rovi orqali) yangilaydi — SPA ichidagi navigatsiya bunga
+// yetarli emas. Foydalanuvchi ariza sahifasini ochib qo'yib, uzoq vaqtdan
+// keyin (masalan ertasi kuni) "To'ldirish"ni bossa, u hali ham "tizimga
+// kirgan" ko'rinadi (sahifa hech narsa demaydi), lekin cookie'dagi token
+// aslida eskirgan bo'ladi — natijada "sessiya tugagan" xatosi chiqadi,
+// garchi foydalanuvchi chiqib ketmagan bo'lsa ham. Shuning uchun tokenni
+// o'qishdan OLDIN o'sha tab avtomatik qayta yuklanadi — bu sessiya
+// tugagan-tugamaganidan qat'i nazar zararsiz (agar hali tugamagan bo'lsa,
+// reload shunchaki tokenni yangilab qo'yadi).
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function refreshRegistrationTab(id) {
+  const tabs = await chrome.tabs.query({});
+  const match = tabs.find((t) => t.url && parseRegistrationId(t.url) === String(id));
+  if (!match) return; // tab topilmadi (yopilgan bo'lishi mumkin) — token o'zi sinaladi
+  await chrome.tabs.reload(match.id);
+  try {
+    // checkAlreadyComplete=false: reload chaqirilgan zahoti tab hali ham
+    // ESKI "complete" holatida ko'rinishi mumkin — shu sabab bilan avval
+    // shu tekshiruv tufayli funksiya darhol (haqiqiy yuklanishni kutmasdan)
+    // qaytib ketardi.
+    await waitForTabComplete(match.id, 20000, false);
+  } catch {
+    return;
+  }
+  // Sahifa brauzer darajasida "yuklandi" (complete) holatiga yetgach ham,
+  // RefreshToken so'rovining o'zi sahifaning ishga tushirish skripti orqali
+  // ASINXRON amalga oshadi (birinchi sinovda aynan shu sabab ishlamay
+  // qoldi — cookie hali yangilanmagan paytda o'qib qo'yilgan edi). Shuning
+  // uchun qisqa qo'shimcha kutish beriladi.
+  await delay(1500);
+}
+
 // sr-new.ihma.uz keeps its access token in an httpOnly "Authorization"
 // cookie (unlike the old system, which kept a plain, JS-readable token in
 // sessionStorage) — so it can't be read via a content script anymore. The
@@ -153,13 +197,11 @@ function clickTemplateCard(template) {
   return !!card;
 }
 
-async function findOrOpenLetterTab() {
-  const host = await getLetterHost();
-  const origin = await getLetterOrigin();
+function findOrOpenLetterTab() {
   return findOrOpenTab((url) => {
     try {
       const u = new URL(url);
-      if (u.hostname !== origin.hostname || u.port !== origin.port) return false;
+      if (u.hostname !== LETTER_ORIGIN.hostname || u.port !== LETTER_ORIGIN.port) return false;
       // Only the actual create/edit form page has the template selector —
       // exclude other pages on the same origin (dashboard, login, ariza app).
       const path = u.pathname.replace(/\/+$/, "") || "/";
@@ -167,7 +209,7 @@ async function findOrOpenLetterTab() {
     } catch {
       return false;
     }
-  }, `${host}${LETTER_CREATE_PATH}/`);
+  }, `${LETTER_HOST}${LETTER_CREATE_PATH}/`);
 }
 
 // Tab yuklangach, haqiqatan xat formasida turibmizmi? Django login talab
@@ -308,9 +350,24 @@ async function apiFetch(url, token, { method = "GET", body } = {}) {
     clearTimeout(timer);
   }
 
-  if (res.status === 401 || res.status === 403) {
+  // 401 va 403 ikki xil sabab: 401 — token haqiqatan yaroqsiz/eskirgan
+  // (qaytadan kirish kerak). 403 — token yaroqli, lekin shu hisobda o'sha
+  // amal (masalan "Moslik baholash" bo'limini ko'rish) uchun ruxsat yo'q —
+  // bu sessiya emas, balki ROL/RUXSAT masalasi (sr-new.ihma.uz'da
+  // administratorga murojaat qilish kerak). Ikkalasini bitta "sessiya
+  // tugagan" deb ko'rsatish chalg'ituvchi edi — xodim hali tizimga kirgan
+  // bo'lsa ham shu xabarni ko'rib chalkashib qolgan holat aynan shu edi.
+  if (res.status === 401) {
     throw new Error(
       "sr-new.ihma.uz sessiyasi tugagan. O'sha sahifada qaytadan tizimga kiring."
+    );
+  }
+  if (res.status === 403) {
+    throw new Error(
+      `sr-new.ihma.uz sizning hisobingizga bu amal uchun ruxsat bermadi ` +
+      `(${new URL(url).pathname}). Bu sessiya tugashi emas — hisobingizda ` +
+      `kerakli bo'limga (masalan "Moslik baholash") kirish huquqi yo'qligi ` +
+      `mumkin. sr-new.ihma.uz administratoriga murojaat qiling.`
     );
   }
   if (!res.ok) {
@@ -447,6 +504,7 @@ function decideTemplate(statusCode) {
 // itself (so the user sees the same selection they'd have made by hand),
 // then fills it from the matching source.
 async function runSmartFill(id) {
+  await refreshRegistrationTab(id);
   const token = await getAuthTokenFromCookie();
   const registration = await apiFetch(
     `${API_BASE}/Application/Get?id=${encodeURIComponent(id)}`,

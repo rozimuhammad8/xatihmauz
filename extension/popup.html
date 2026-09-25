@@ -45,39 +45,6 @@
   #status.ok {
     color: #2e7d32;
   }
-  details {
-    margin-top: 12px;
-    border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-    padding-top: 10px;
-  }
-  summary {
-    cursor: pointer;
-    font-size: 12px;
-    opacity: .75;
-  }
-  .row {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-  }
-  .row input {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 8px;
-    font-size: 12.5px;
-    font-family: inherit;
-  }
-  .row button {
-    width: auto;
-    padding: 6px 12px;
-  }
-  .hint {
-    display: block;
-    margin-top: 6px;
-    font-size: 11.5px;
-    opacity: .65;
-    line-height: 1.45;
-  }
 </style>
 </head>
 <body>
@@ -87,17 +54,6 @@
   <button id="fillBtn" disabled>To'ldirish</button>
 
   <div id="status"></div>
-
-  <details id="sozlamalar">
-    <summary>Server manzili</summary>
-    <div class="row">
-      <input type="url" id="hostInput" placeholder="http://127.0.0.1:8000" />
-      <button id="hostSaveBtn">Saqlash</button>
-    </div>
-    <span class="hint">Reestr tizimi qayerda ishlayotgani. Serverga chiqarilgan bo'lsa,
-      masalan <code>https://ihma.uz</code> deb yozing.</span>
-    <div id="hostStatus" class="hint"></div>
-  </details>
 
   <script src="popup.js"></script>
 </body>

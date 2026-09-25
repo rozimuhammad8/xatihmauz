@@ -67,52 +67,6 @@ function describeFillResult(message) {
   };
 }
 
-/* ---------------- SERVER MANZILI ----------------
-   Manzil kodda qattiq yozilmagan: kengaytma uni chrome.storage'dan oladi.
-   Shu sababli ilova serverga chiqarilganda fayllarni tahrirlash shart emas. */
-const DEFAULT_LETTER_HOST = "http://127.0.0.1:8000";
-const hostInput = document.getElementById("hostInput");
-const hostSaveBtn = document.getElementById("hostSaveBtn");
-const hostStatus = document.getElementById("hostStatus");
-
-function hostStatusKorsat(matn, xatomi) {
-  hostStatus.textContent = matn;
-  hostStatus.style.color = xatomi ? "#c0392b" : "";
-}
-
-async function hostniYuklash() {
-  const { letterHost } = await chrome.storage.sync.get("letterHost");
-  hostInput.value = letterHost || DEFAULT_LETTER_HOST;
-}
-
-hostSaveBtn.addEventListener("click", async () => {
-  const xom = hostInput.value.trim().replace(/\/+$/, "");
-  let origin;
-  try {
-    const u = new URL(xom);
-    if (!/^https?:$/.test(u.protocol)) throw new Error("protokol");
-    origin = `${u.protocol}//${u.host}/*`;
-  } catch {
-    hostStatusKorsat("Manzil noto'g'ri. Masalan: https://ihma.uz", true);
-    return;
-  }
-
-  // Yangi manzilga so'rov yuborish uchun foydalanuvchidan ruxsat so'raladi.
-  let ruxsat = true;
-  try {
-    ruxsat = await chrome.permissions.request({ origins: [origin] });
-  } catch {
-    ruxsat = true;   // ruxsat allaqachon manifestda bo'lsa
-  }
-  if (!ruxsat) {
-    hostStatusKorsat("Ruxsat berilmadi — manzil saqlanmadi.", true);
-    return;
-  }
-
-  await chrome.storage.sync.set({ letterHost: xom });
-  hostStatusKorsat("Saqlandi: " + xom, false);
-});
-
 // Asks the background service worker which applicationId is currently open
 // on a sr-new.ihma.uz/applications/<id> tab. No manual id entry anymore —
 // the user is expected to already have that ariza open.
@@ -191,5 +145,4 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
-hostniYuklash();
 init();

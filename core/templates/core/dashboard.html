@@ -861,6 +861,10 @@
 
   /* ---------------- MUROJAAT DOCX YUKLASH ---------------- */
   const MUROJAAT_LABELS = {
+    // Yangi format (2026): jadval qatori, raqam va sana bitta katakda
+    // " // " bilan ajratilgan, masalan "6364-rsq/26  //  28.01.2026 17:29:13".
+    raqamiSana: 'Мурожаат тартиб рақами ва келиб тушган сана',
+    // Eski, jadvalsiz format uchun zaxira (docxParseFields pastda ishlatadi).
     raqami: 'Мурожаат тартиб рақами',
     operator: 'Оператор рақами',
     sana: 'Мурожаат тушган сана ва вақт',
@@ -887,25 +891,40 @@
     return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
   }
 
+  // Real hujjatlarda "ko'cha" so'zi juda xilma-xil yoziladi — "кўчаси"
+  // (odatiy), с'siz bare "кўча", rus tilida "УЛИЦА". Avval eng aniq
+  // ("кўчас.../улиц...") shaklni qidiramiz, faqat topilmasa "кўч"/"куч"
+  // ildiziga qaraymiz (kamroq aniq — "кучли" kabi so'zlarga ham mos
+  // kelishi mumkin, shuning uchun ikkinchi navbatda).
   function docxParseAddress(manzilRaw){
     const lines = manzilRaw.split('\n').map(s => s.trim()).filter(Boolean);
     const mfyLine = lines.find(l => /мфй/i.test(l)) || '';
     const mfyNomi = mfyLine.replace(/мфй/gi, '').replace(/[,.\s]+$/, '').trim();
 
-    const streetLine = lines.slice().reverse().find(l => /(кўчас|кучас|ko['ʻ]?chas|kochas)/i.test(l)) || '';
+    const STRICT_RE = /кўчас[аи]?|кучас[аи]?|ko['ʻ]?chas[ai]?|kochas[ai]?|улиц/i;
+    const LOOSE_RE = /кўч|куч|ko['ʻ]?ch|koch/i;
+    const reversed = lines.slice().reverse();
+    const streetLine = reversed.find(l => STRICT_RE.test(l)) || reversed.find(l => LOOSE_RE.test(l)) || '';
+
     const parts = streetLine.split(',').map(s => s.trim()).filter(Boolean);
-    let streetPart = parts.find(p => /(кўчас|кучас|ko['ʻ]?chas|kochas)/i.test(p)) || parts[0] || '';
+    let streetPart = parts.find(p => STRICT_RE.test(p)) || parts.find(p => LOOSE_RE.test(p)) || parts[0] || '';
     streetPart = streetPart
       .replace(/кўчас[аи]?|кучас[аи]?|ko['ʻ]?chas[ai]?|kochas[ai]?/gi, '')
+      // \w kirill harflarini tushunmaydi (faqat [A-Za-z0-9_]), shuning
+      // uchun "улица"ning oxirgi "а" harfi qolib ketmasligi uchun aniq
+      // kirill diapazoni ishlatiladi.
+      .replace(/улиц[а-яёА-ЯЁ]*/gi, '')
+      .replace(/кўча|куча|ko['ʻ]?cha|kocha/gi, '')
       .replace(/\d+[-\s]?(уй|uy).*/i, '')
       .replace(/uy\s*:\s*\S+/i, '')
-      .replace(/[,.\s]+$/, '')
+      .replace(/^\d+[-\s:]+/, '')
+      .replace(/^[,.\s]+|[,.\s]+$/g, '')
       .trim();
 
     return { mfyNomi, street: streetPart };
   }
 
-  async function docxReadFullText(file){
+  async function docxReadDocument(file){
     const buf = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buf);
     const entry = zip.file('word/document.xml');
@@ -915,16 +934,65 @@
     if (xmlDoc.getElementsByTagName('parsererror').length) {
       throw new Error("Fayl XML tuzilishini o'qib bo'lmadi.");
     }
-    const paragraphs = Array.from(xmlDoc.getElementsByTagName('w:p')).map(p =>
-      Array.from(p.getElementsByTagName('w:t')).map(t => t.textContent).join('')
+
+    const pText = (p) => Array.from(p.getElementsByTagName('w:t')).map(t => t.textContent).join('');
+    const fullText = Array.from(xmlDoc.getElementsByTagName('w:p')).map(pText).join('\n');
+
+    const cellText = (tc) => Array.from(tc.getElementsByTagName('w:p')).map(pText).join('\n').trim();
+    const tables = Array.from(xmlDoc.getElementsByTagName('w:tbl')).map((tbl) =>
+      Array.from(tbl.getElementsByTagName('w:tr')).map((tr) =>
+        Array.from(tr.getElementsByTagName('w:tc')).map(cellText)
+      )
     );
-    return paragraphs.join('\n');
+
+    return { fullText, tables };
   }
 
-  function docxParseFields(fullText){
-    const orgMatch = fullText.match(/^([\s\S]*?)орқали\s+келиб\s+тушган\s+мурожаат/i);
-    const tashkilot = orgMatch ? krilToLotin(orgMatch[1].trim()) : '';
+  function docxFindRowValue(rows, labelSubstring){
+    for (const cells of rows){
+      const label = cells.length >= 2 ? cells[cells.length - 2] : cells[0];
+      if (label && label.indexOf(labelSubstring) !== -1){
+        return cells[cells.length - 1] || '';
+      }
+    }
+    return '';
+  }
 
+  function docxParseHeaderOrg(headerText){
+    const orgMatch = (headerText || '').match(/^([\s\S]*?)орқали\s+келиб\s+тушган\s+мурожаат/i);
+    return orgMatch ? krilToLotin(orgMatch[1].trim()) : '';
+  }
+
+  function docxParseFields(fullText, tables){
+    // Yangi format (2026): 1-jadval — sarlavha (manba nomi), "Ф.И.О."
+    // yorlig'i bor jadval — raqamlangan maydonlar (murojaat ma'lumotlari).
+    const fieldTable = (tables || []).find((rows) =>
+      rows.some((cells) => cells.some((c) => c.indexOf(MUROJAAT_LABELS.fio) !== -1))
+    );
+
+    if (fieldTable){
+      const headerTable = tables[0];
+      const headerText = headerTable && headerTable[0] ? headerTable[0][0] : '';
+      const tashkilot = docxParseHeaderOrg(headerText);
+
+      const raqamiSana = docxFindRowValue(fieldTable, MUROJAAT_LABELS.raqamiSana);
+      const [raqami, sanaRaw] = raqamiSana.split('//').map((s) => (s || '').trim());
+      const fioRaw = docxFindRowValue(fieldTable, MUROJAAT_LABELS.fio);
+      const manzilRaw = docxFindRowValue(fieldTable, MUROJAAT_LABELS.manzil);
+      const { mfyNomi, street } = docxParseAddress(manzilRaw);
+
+      return {
+        murojaatfrom: tashkilot,
+        murojaatRaqami: krilToLotin(raqami || ''),
+        murojaatVaqti: docxParseDate(sanaRaw || ''),
+        fio: toTitleCase(krilToLotin(fioRaw)),
+        mfyNomi: toTitleCase(krilToLotin(mfyNomi)),
+        street: toTitleCase(krilToLotin(street)),
+      };
+    }
+
+    // Zaxira yo'l: eski, jadvalsiz (erkin matnli) hujjat formati.
+    const tashkilot = docxParseHeaderOrg(fullText);
     const raqami = docxExtractBetween(fullText, MUROJAAT_LABELS.raqami, MUROJAAT_LABELS.operator);
     const sanaRaw = docxExtractBetween(fullText, MUROJAAT_LABELS.sana, MUROJAAT_LABELS.tashkilotgaSana);
     const fioRaw = docxExtractBetween(fullText, MUROJAAT_LABELS.fio, MUROJAAT_LABELS.manzil);
