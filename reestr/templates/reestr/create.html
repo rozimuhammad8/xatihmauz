@@ -76,6 +76,7 @@
   .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--text-1)}
   .field .hint{display:block;font-size:11px;color:var(--text-3);margin-top:4px}
   .field input[type=text],.field input[type=number]{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;transition:.15s}
+  .reason-content textarea{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;background:var(--main-bg);color:var(--text-1);font-family:inherit;resize:vertical}
   .field input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
 
   .csel{position:relative}
@@ -242,6 +243,13 @@
     <div class="isqayta">
       <label class="radio-opt"><input type="radio" name="isQayta" value="true" id="isQaytaHa">Ha (qayta o'rganilganda)</label>
       <label class="radio-opt"><input type="radio" name="isQayta" value="false" id="isQaytaYoq" checked>Yo'q (o'rganilganda)</label>
+    </div>
+
+    <div class="reason">
+      <label class="reason-head"><input type="checkbox" id="tizimSababiToggle" name="tizimSababiToggle">Tizim tomonidan aniqlangan sabab</label>
+      <div class="reason-content" id="tizimSababiContent">
+        <textarea id="tizimSababiMatni" name="tizimSababiMatni" rows="3" placeholder="Masalan: Sizning tizim orqali yuborgan arizangiz, oilaning har bir a'zosiga to'g'ri keladigan o'rtacha oylik jami daromad belgilangan mezondan ko'pligi sababli rad etildi."></textarea>
+      </div>
     </div>
 
     <div class="reason">
@@ -536,7 +544,7 @@
   /* ---------------- TEMPLATE SELECTOR ---------------- */
   const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat', 'arizaKiritilmagan'];
   const fieldMap = {
-    rad: 'radFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
+    rad: 'radFields', toxtatilgan: 'radFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
     muddat: 'muddatFields', arizaKiritilgan: 'arizaKiritilganFields',
     arizaKiritilmagan: 'arizaKiritilmaganFields',
   };
@@ -547,6 +555,8 @@
     document.querySelectorAll('.tpl-opt').forEach(el => el.classList.toggle('active', el.dataset.template === tpl));
     document.querySelectorAll('.conditional-fields').forEach(el => el.classList.toggle('show', el.id === fieldMap[tpl]));
     document.getElementById('arizaInfoGrid').style.display = TEMPLATES_WITHOUT_ARIZA_INFO.includes(tpl) ? 'none' : 'grid';
+    document.querySelector('#radFields h3').textContent =
+      tpl === 'toxtatilgan' ? "To'lovni to'xtatish sababi" : "Rad etish sabablari";
   }
   document.querySelectorAll('.tpl-opt').forEach(el => {
     el.addEventListener('click', () => selectTemplate(el.dataset.template));
@@ -738,6 +748,9 @@
   document.getElementById('addAvtoRad').addEventListener('click', () => addAvtoRad());
   document.getElementById('addRasmiyRad').addEventListener('click', () => addRasmiyRad());
 
+  document.getElementById('tizimSababiToggle').addEventListener('change', function(){
+    document.getElementById('tizimSababiContent').classList.toggle('show', this.checked);
+  });
   document.getElementById('uyRadToggle').addEventListener('change', function(){
     document.getElementById('uyRadContent').classList.toggle('show', this.checked);
     if (this.checked && uyRadCount === 0) addUyRad();
@@ -769,8 +782,9 @@
       tasdiqMalumotlari: { is:false, tasdiqSanasi:'', tolovSanasi:'', tolovSum:'', hisobRaqami:'' },
     };
 
-    if (currentTemplate === 'rad'){
+    if (currentTemplate === 'rad' || currentTemplate === 'toxtatilgan'){
       data.radSabablari = {
+        tizimSababi: getVal('tizimSababiMatni'),
         uydaEmasRad: getCheck('uydaEmasRad'),
         norasmiyRad: getCheck('norasmiyRad'),
         uyRad: Array.from(document.querySelectorAll('#uyRadContainer .dynamic-item')).map(item => ({
@@ -816,10 +830,11 @@
       if (!data.arizaMaqsadi) errors.push("Ariza maqsadini tanlang!");
     }
 
-    if (data.template === 'rad'){
+    if (data.template === 'rad' || data.template === 'toxtatilgan'){
       const rad = data.radSabablari;
-      const hasReason = rad.uydaEmasRad || rad.norasmiyRad || rad.uyRad.length>0 || rad.avtoRad.length>0 || rad.rasmiyRad.length>0;
+      const hasReason = rad.tizimSababi || rad.uydaEmasRad || rad.norasmiyRad || rad.uyRad.length>0 || rad.avtoRad.length>0 || rad.rasmiyRad.length>0;
       if (!hasReason) errors.push("Kamida bitta rad etish sababini tanlang!");
+      if (getCheck('tizimSababiToggle') && !rad.tizimSababi) errors.push('"Tizim tomonidan aniqlangan sabab" tanlangan, lekin matn kiritilmagan!');
       if (getCheck('uyRadToggle') && rad.uyRad.length===0) errors.push('"Ko\'chmas mulk" tanlangan, lekin hech qanday mulk qo\'shilmagan!');
       if (getCheck('avtoRadToggle') && rad.avtoRad.length===0) errors.push('"Avtomobil" tanlangan, lekin hech qanday avtomobil qo\'shilmagan!');
       if (getCheck('rasmiyRadToggle') && rad.rasmiyRad.length===0) errors.push('"Rasmiy daromad" tanlangan, lekin hech qanday daromad qo\'shilmagan!');
@@ -887,8 +902,13 @@
     document.getElementById('isQaytaHa').checked = !!d.isQayta;
     document.getElementById('isQaytaYoq').checked = !d.isQayta;
 
-    if (d.template === 'rad' && d.radSabablari){
+    if ((d.template === 'rad' || d.template === 'toxtatilgan') && d.radSabablari){
       const rad = d.radSabablari;
+      if (rad.tizimSababi){
+        document.getElementById('tizimSababiToggle').checked = true;
+        document.getElementById('tizimSababiContent').classList.add('show');
+        document.getElementById('tizimSababiMatni').value = rad.tizimSababi;
+      }
       document.getElementById('uydaEmasRad').checked = !!rad.uydaEmasRad;
       document.getElementById('norasmiyRad').checked = !!rad.norasmiyRad;
       if (rad.uyRad && rad.uyRad.length){

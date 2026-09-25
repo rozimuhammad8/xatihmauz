@@ -5,6 +5,7 @@ from core.text_utils import ijrochi_qisqa_ism
 
 TEMPLATE_CHOICES = [
     ("rad", "Rad etish"),
+    ("toxtatilgan", "To'lov to'xtatilgan"),
     ("tasdiqlandi", "Tasdiqlash"),
     ("tayinlandi", "Tayinlash"),
     ("muddat", "Muddat so'rash"),

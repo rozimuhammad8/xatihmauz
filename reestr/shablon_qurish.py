@@ -44,6 +44,7 @@ P_HISOB_RAQAMI = "{hisob_raqami}"
 P_TOLOV_SUMMASI = "{tolov_summasi}"
 P_TAYINLASH_QOSHIMCHA = "{tayinlash_qoshimcha}"
 P_QOSHIMCHA_MALUMOT = "{qoshimcha_malumot}"
+P_TIZIM_SABABI_MATNI = "{tizim_sababi_matni}"
 
 # Dinamik ro'yxatlar — ichida qalin qismlar bo'ladi, shuning uchun oddiy matn
 # bilan emas, formatlangan segmentlar bilan almashtiriladi.
@@ -58,6 +59,7 @@ P_RASMIY_MATNI = "{rasmiy_matni}"
 SHART_AVTO = "{?avtoRad}"
 SHART_UY = "{?uyRad}"
 SHART_RASMIY = "{?rasmiyRad}"
+SHART_TIZIM_SABABI = "{?tizimSababi}"
 SHART_NORASMIY = "{?norasmiyRad}"
 SHART_UYDA_EMAS = "{?uydaEmasRad}"
 SHART_TOLOV = "{?tolov}"
@@ -103,6 +105,11 @@ def qur_rad(doc):
         ("o'rganilganda quydagilar sababli rad etildi:", {}),
     ])
 
+    body_paragraph(doc, [
+        (SHART_TIZIM_SABABI, {}),
+        (P_TIZIM_SABABI_MATNI, {}),
+        dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
+    ])
     body_paragraph(doc, [
         (SHART_AVTO, {}),
         ("Sizning oilangiz foydalanuvida bo'lgan ", {}),
@@ -161,6 +168,36 @@ def qur_rad(doc):
         (" sizga ", {}),
         (P_ARIZA_MAQSADI, {'bold': True}),
         (" tayinlash rad etildi.", {}),
+    ])
+
+    body_paragraph(doc, [(dg.APPEAL_PARAGRAPH, {})])
+    add_signature_block(doc, _imzo_placeholderlari())
+
+
+def qur_toxtatilgan(doc):
+    """"To'lov to'xtatilgan" xati — "rad" bilan bir xil holatga tegishli
+    (oila avval Ijtimoiy reestrga/nafaqaga tayinlangan, keyin qayta tekshiruvda
+    to'xtatilgan), shuning uchun sarlavha/Nizom abzatslari bir xil, faqat
+    xulosa jumlasi "rad etildi" emas "to'xtatildi" deyiladi. Sabab matni
+    (tizimSababi) tizimdan tayyor jumla sifatida keladi — qarang: qur_rad.
+    """
+    _sarlavha(doc)
+
+    body_paragraph(doc, [(dg.INTRO_PARAGRAPH, {})])
+    body_paragraph(doc, dg.NIZOM_FAMILY_REGISTRY_PARAGRAPH)
+    body_paragraph(doc, [
+        ("Nizom talabalariga asosan sizning ", {}),
+        (P_ARIZA_MAQSADI, {'bold': True}),
+        (" uchun berilgan ", {}),
+        (P_ARIZA_SANASI, {'bold': True}),
+        (" kungi arizangiz va unga ilova qilingan ma’lumotlari «Ijtimoiy himoya yagona reyestri» axborot tizimiga ", {}),
+        (f"{P_ARIZA_ID}-ID", {'bold': True}),
+        (" raqam bilan kiritilgan va dastur tomonidan qayta tekshirilganda quydagilar sababli to'lovingiz to'xtatildi:", {}),
+    ])
+    body_paragraph(doc, [
+        (SHART_TIZIM_SABABI, {}),
+        (P_TIZIM_SABABI_MATNI, {}),
+        dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
     ])
 
     body_paragraph(doc, [(dg.APPEAL_PARAGRAPH, {})])
@@ -301,6 +338,7 @@ def _imzo_placeholderlari():
 # Shablon kodi -> (fayl nomi, quruvchi funksiya)
 SHABLONLAR = {
     "rad": ("rad.docx", qur_rad),
+    "toxtatilgan": ("toxtatilgan.docx", qur_toxtatilgan),
     "tasdiqlandi": ("tasdiqlandi.docx", qur_tasdiqlandi),
     "tayinlandi": ("tayinlandi.docx", qur_tayinlandi),
     "muddat": ("muddat.docx", qur_muddat),

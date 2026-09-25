@@ -57,6 +57,11 @@ def rad_paragraphs(data):
         ("o'rganilganda quydagilar sababli rad etildi:", {}),
     ]))
 
+    if rad.get("tizimSababi"):
+        paras.append(_p([
+            (rad["tizimSababi"], {}),
+            dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
+        ]))
     if rad.get("avtoRad"):
         paras.append(_p(
             [("Sizning oilangiz foydalanuvida bo'lgan ", {})] + dg.car_segments(rad["avtoRad"]) +
@@ -93,6 +98,34 @@ def rad_paragraphs(data):
             "holatini o'rganish imkoni bo'lmadi. Natijada murojaat bo'yicha zarur o'rganish "
             "yakunlanmaganligi sababli", {})] + dg.rad_xulosa_segments(data)))
 
+    paras.append(_p([(dg.APPEAL_PARAGRAPH, {})]))
+    return paras
+
+
+def toxtatilgan_paragraphs(data):
+    """"To'lov to'xtatilgan" xati brauzer ko'rinishi — qarang:
+    shablon_qurish.qur_toxtatilgan (docx bilan bir xil matn)."""
+    rad = data.get("radSabablari") or {}
+    tuman = data.get("tuman") or ""
+    paras = [
+        _p([(dg.INTRO_PARAGRAPH.replace("{tuman}", tuman), {})]),
+        _p(dg.NIZOM_FAMILY_REGISTRY_PARAGRAPH),
+    ]
+    ariza_year, ariza_day, ariza_month = dg.split_date(data.get("arizaVaqti"))
+    paras.append(_p([
+        ("Nizom talabalariga asosan sizning ", {}),
+        (data.get("arizaMaqsadi", ""), {"bold": True}),
+        (" uchun berilgan ", {}),
+        (f"{ariza_year}-yil {ariza_day}-{ariza_month}", {"bold": True}),
+        (" kungi arizangiz va unga ilova qilingan ma’lumotlari «Ijtimoiy himoya yagona reyestri» axborot tizimiga ", {}),
+        (f"{data.get('arizaID', '')}-ID", {"bold": True}),
+        (" raqam bilan kiritilgan va dastur tomonidan qayta tekshirilganda quydagilar sababli to'lovingiz to'xtatildi:", {}),
+    ]))
+    if rad.get("tizimSababi"):
+        paras.append(_p([
+            (rad["tizimSababi"], {}),
+            dg.asos_segment("(Asos: VM 35-son qarori 4-bob.)"),
+        ]))
     paras.append(_p([(dg.APPEAL_PARAGRAPH, {})]))
     return paras
 
@@ -211,6 +244,7 @@ def ariza_kiritilmagan_paragraphs(data):
 
 PARAGRAPH_BUILDERS = {
     "rad": rad_paragraphs,
+    "toxtatilgan": toxtatilgan_paragraphs,
     "tasdiqlandi": tasdiqlandi_paragraphs,
     "tayinlandi": tayinlandi_paragraphs,
     "muddat": muddat_paragraphs,
@@ -223,7 +257,7 @@ PARAGRAPH_BUILDERS = {
 # har doim to'ldiriladi, shuning uchun preview ham hech qaysi shablonda
 # uni yashirmasligi kerak).
 TEMPLATES_WITH_SIGNATURE = {
-    "rad", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan", "arizaKiritilgan",
+    "rad", "toxtatilgan", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan", "arizaKiritilgan",
 }
 
 

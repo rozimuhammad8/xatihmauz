@@ -74,10 +74,11 @@ def _validate_payload(payload):
         if not payload.get("arizaMaqsadi"):
             errors.append("Ariza maqsadini tanlang!")
 
-    if template == "rad":
+    if template in ("rad", "toxtatilgan"):
         rad = payload.get("radSabablari") or {}
         has_reason = (
-            rad.get("uydaEmasRad")
+            rad.get("tizimSababi")
+            or rad.get("uydaEmasRad")
             or rad.get("norasmiyRad")
             or (rad.get("uyRad") and len(rad["uyRad"]) > 0)
             or (rad.get("avtoRad") and len(rad["avtoRad"]) > 0)
@@ -117,6 +118,8 @@ def _normalize_rad_sabablari(rad):
     shuning uchun saqlashdan oldin shu yerda tozalanadi)."""
     if not rad:
         return rad
+    if rad.get("tizimSababi"):
+        rad["tizimSababi"] = tozalangan_matn(rad.get("tizimSababi"))
     for item in rad.get("uyRad") or []:
         item["uyManzil"] = _clean_name(item.get("uyManzil"))
         item["uyKadastr"] = raqamli_matn(item.get("uyKadastr"))
@@ -147,7 +150,10 @@ def _apply_payload(xat, payload):
     xat.ariza_id = raqamli_matn(payload.get("arizaID"))
     xat.is_qayta = bool(payload.get("isQayta"))
 
-    xat.rad_sabablari = _normalize_rad_sabablari(payload.get("radSabablari") or {}) if template == "rad" else {}
+    xat.rad_sabablari = (
+        _normalize_rad_sabablari(payload.get("radSabablari") or {})
+        if template in ("rad", "toxtatilgan") else {}
+    )
     xat.tasdiq_sanasi = tozalangan_matn(tasdiq.get("tasdiqSanasi")) if template == "tasdiqlandi" else ""
     xat.tolov_sanasi = tozalangan_matn(tasdiq.get("tolovSanasi")) if template == "tasdiqlandi" else ""
     xat.tolov_sum = format_money(tasdiq.get("tolovSum", "")) if template == "tasdiqlandi" else ""

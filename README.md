@@ -8,7 +8,7 @@ iborat.
 |---|---|---|---|
 | **Bosh ijtimoiy** | `bosh_ijtimoiy` | `/ariza/` | "Saxovat va ko'mak" arizalariga javob xatlari + xizmat hujjatlari |
 | **Reestr tizimi** | `reestr` | `/reestr/` | "Ijtimoiy himoya yagona reyestri" bo'yicha javob xatlari |
-| **Chrome kengaytmasi** | — | — | `sr.ihma.uz` dan ma'lumot olib, reestr formasini avtomatik to'ldiradi |
+| **Chrome kengaytmasi** | — | — | `sr-new.ihma.uz` dan ma'lumot olib, reestr formasini avtomatik to'ldiradi |
 
 Barcha hujjat matnlari [`Shablons/`](Shablons) papkasidagi `.docx` fayllarda —
 ularni Wordda ochib tahrirlash mumkin, kodga tegish shart emas.
@@ -108,7 +108,7 @@ Shablons/         # tahrirlangan .docx shablonlar
 Manzil kengaytma ichida saqlanadi — fayllarni tahrirlash shart emas. Yangi
 manzilga birinchi marta saqlaganda Chrome ruxsat so'raydi.
 
-Ishlatish: `sr.ihma.uz` da arizani oching → kengaytma belgisini bosing →
+Ishlatish: `sr-new.ihma.uz` da arizani oching → kengaytma belgisini bosing →
 **To'ldirish**. Shablon ariza holatiga (`statusId`) qarab avtomatik tanlanadi.
 Xat avtomatik yuborilmaydi — tekshirib, o'zingiz saqlaysiz.
 
