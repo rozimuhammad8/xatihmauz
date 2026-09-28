@@ -177,11 +177,29 @@ async function refreshRegistrationTab(id) {
 // sessionStorage) — so it can't be read via a content script anymore. The
 // chrome.cookies API can read it directly, from the background service
 // worker, without needing any tab open at all.
+//
+// ihma.uz'da bir nechta sub-domen bor (sr.ihma.uz, sr-new.ihma.uz, va
+// boshqalar), har biri o'zining "Authorization" nomli cookie'sini
+// o'rnatishi mumkin. Agar ulardan biri cookie'sini butun ".ihma.uz"
+// domeniga (sub-domenidan mustaqil) o'rnatgan bo'lsa, u sr-new.ihma.uz'ga
+// so'rov yuborilganda ham qo'shilib ketishi mumkin edi. Shuning uchun
+// olingan cookie'ning domeni ANIQ "sr-new.ihma.uz" ekanligi tekshiriladi —
+// boshqacha bo'lsa, tokendan foydalanish o'rniga aniq xato ko'rsatiladi
+// (chrome.cookies.getAll() bu Chrome versiyasida url-filter bilan doim
+// bo'sh natija qaytargani uchun ishlatilmadi — get() esa ishonchli ishlaydi,
+// faqat domenni qo'lda tasdiqlash kerak).
 async function getAuthTokenFromCookie() {
   const cookie = await chrome.cookies.get({ url: `${REG_HOST}/`, name: "Authorization" });
   if (!cookie || !cookie.value) {
     throw new Error(
       "sr-new.ihma.uz sessiyasi topilmadi. O'sha saytda avval tizimga kiring."
+    );
+  }
+  if (cookie.domain !== REG_ORIGIN.hostname) {
+    throw new Error(
+      `Token noto'g'ri domenga tegishli (${cookie.domain}, kutilgan: ` +
+      `${REG_ORIGIN.hostname}) — ehtimol ihma.uz'ning boshqa sahifasi bilan ` +
+      "aralashib qoldi. sr-new.ihma.uz sahifasini qayta yuklab ko'ring."
     );
   }
   return cookie.value;
