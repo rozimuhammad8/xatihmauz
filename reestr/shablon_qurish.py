@@ -40,7 +40,7 @@ P_ARIZA_ID = "{ariza_id}"
 P_QAYTA = "{qayta}"
 P_TASDIQ_DAVRI = "{tasdiq_davri}"
 P_TOLOV_DAVRI = "{tolov_davri}"
-P_HISOB_RAQAMI = "{hisob_raqami}"
+P_KARTA_RAQAMI = "{karta_raqami}"
 P_TOLOV_SUMMASI = "{tolov_summasi}"
 P_TAYINLASH_QOSHIMCHA = "{tayinlash_qoshimcha}"
 P_QOSHIMCHA_MALUMOT = "{qoshimcha_malumot}"
@@ -237,8 +237,8 @@ def qur_tasdiqlandi(doc):
         ("Sizga ", {}),
         (P_TOLOV_DAVRI, {}),
         (" uchun ", {}),
-        (P_HISOB_RAQAMI, {}),
-        (" hisob raqamiga ", {}),
+        (P_KARTA_RAQAMI, {}),
+        (" karta raqamiga ", {}),
         (P_TOLOV_SUMMASI, {}),
         (" so'm to'lab berilganligini ma’lum qilamiz.", {}),
     ])

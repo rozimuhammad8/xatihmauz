@@ -96,7 +96,7 @@ def _validate_payload(payload):
         for key, msg in [
             ("tasdiqSanasi", "Tasdiqlash sanasini kiriting!"),
             ("tolovSanasi", "To'lov sanasini kiriting!"),
-            ("hisobRaqami", "Hisob raqamini kiriting!"),
+            ("kartaRaqami", "Karta raqamini kiriting!"),
             ("tolovSum", "To'lov summasini kiriting!"),
         ]:
             if not tasdiq.get(key):
@@ -161,7 +161,7 @@ def _apply_payload(xat, payload):
     xat.tasdiq_sanasi = tozalangan_matn(tasdiq.get("tasdiqSanasi")) if template == "tasdiqlandi" else ""
     xat.tolov_sanasi = tozalangan_matn(tasdiq.get("tolovSanasi")) if template == "tasdiqlandi" else ""
     xat.tolov_sum = format_money(tasdiq.get("tolovSum", "")) if template == "tasdiqlandi" else ""
-    xat.hisob_raqami = raqamli_matn(tasdiq.get("hisobRaqami")) if template == "tasdiqlandi" else ""
+    xat.karta_raqami = raqamli_matn(tasdiq.get("kartaRaqami")) if template == "tasdiqlandi" else ""
     xat.tayinlash_qoshimcha = tozalangan_matn(payload.get("tayinlashQoshimcha")) if template == "tayinlandi" else ""
     # "muddat" va "arizaKiritilmagan" ikkalasi ham xuddi shu ixtiyoriy
     # "qo'shimcha ma'lumot" maydonidan foydalanadi (bir xil model maydoni).

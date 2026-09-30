@@ -294,7 +294,7 @@ class ReestrXatTest(TestCase):
             template="tasdiqlandi", isQayta=False, radSabablari={},
             tasdiqMalumotlari={
                 "is": True, "tasdiqSanasi": "2026, Mart", "tolovSanasi": "2026, Aprel",
-                "hisobRaqami": "222222223545404", "tolovSum": "1450543.00",
+                "kartaRaqami": "222222223545404", "tolovSum": "1450543.00",
             },
         )
         matn = self._eksport_matni()

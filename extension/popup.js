@@ -26,6 +26,14 @@ const RAD_SABAB_NOMLARI = {
   daromadRad: "Rasmiy daromad",
 };
 
+// "Tasdiqlash" uchun avtomatik to'ldiriladigan to'lov maydonlari.
+const TOLOV_MAYDON_NOMLARI = {
+  tasdiqSanasi: "Tasdiqlash sanasi",
+  tolovSanasi: "To'lov sanasi",
+  tolovSum: "To'lov summasi",
+  kartaRaqami: "Karta raqami",
+};
+
 function describeFillResult(message) {
   const nom = TEMPLATE_NOMLARI[message.template];
   if (!nom) {
@@ -45,6 +53,8 @@ function describeFillResult(message) {
   if (filled.tizimSababi) parts.push("Sabab matni");
   const radSabablari = Object.keys(RAD_SABAB_NOMLARI).filter((k) => filled[k]);
   radSabablari.forEach((k) => parts.push(RAD_SABAB_NOMLARI[k]));
+  const tolovMaydonlari = Object.keys(TOLOV_MAYDON_NOMLARI).filter((k) => filled[k]);
+  tolovMaydonlari.forEach((k) => parts.push(TOLOV_MAYDON_NOMLARI[k]));
 
   if (!parts.length) {
     return { text: `Reestr tizimi (${nom}) ochildi, lekin hech qanday mos ma'lumot topilmadi.`, isError: true };
@@ -57,8 +67,8 @@ function describeFillResult(message) {
   if (message.template === "toxtatilgan" && !filled.tizimSababi) {
     ogohlantirish = " Sabab matni topilmadi — qo'lda kiriting.";
   }
-  if (message.template === "tasdiqlandi") {
-    ogohlantirish = " To'lov ma'lumotlarini qo'lda kiriting (hali avtomatik to'ldirilmaydi).";
+  if (message.template === "tasdiqlandi" && !tolovMaydonlari.length) {
+    ogohlantirish = " To'lov ma'lumotlari topilmadi — qo'lda kiriting.";
   }
 
   return {

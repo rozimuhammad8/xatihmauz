@@ -293,6 +293,7 @@ function fillLetterForm(payload) {
   const filled = {
     arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false,
     tizimSababi: false, yangiAvtoRad: false, kopAvtoRad: false, kochmasMulkRad: false, daromadRad: false,
+    tasdiqSanasi: false, tolovSanasi: false, tolovSum: false, kartaRaqami: false,
   };
 
   filled.arizaID = setVal("arizaID", payload.arizaID);
@@ -321,6 +322,12 @@ function fillLetterForm(payload) {
   if (payload.tizimSababi !== undefined) {
     filled.tizimSababi = setVal("tizimSababiMatni", payload.tizimSababi);
   }
+
+  // "Tasdiqlash" — to'lov ma'lumotlari (qarang: runTasdiqlandiFill).
+  filled.tasdiqSanasi = setVal("tasdiqSanasi", payload.tasdiqSanasi);
+  filled.tolovSanasi = setVal("tolovSanasi", payload.tolovSanasi);
+  filled.tolovSum = setVal("tolovSum", payload.tolovSum);
+  filled.kartaRaqami = setVal("kartaRaqami", payload.kartaRaqami);
 
   return { filled };
 }
@@ -497,6 +504,93 @@ async function runToxtatilganFill(id, letterTabId, registration, token) {
   return { template: "toxtatilgan", payload, fillReport };
 }
 
+// ============================================================
+// TASDIQLASH — to'lov ma'lumotlari
+// ============================================================
+const UZ_OYLAR = [
+  "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+  "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
+];
+
+// "2026-09-25T10:19:55.183" -> "2026, Sentabr" (Django tarafidagi
+// parse_year_month() kutayotgan "YYYY, OyNomi" formati — qarang:
+// reestr/docx_generator.py).
+function formatYearMonth(isoDateStr) {
+  const m = String(isoDateStr || "").match(/^(\d{4})-(\d{2})-\d{2}/);
+  if (!m) return "";
+  const monthIdx = Number(m[2]) - 1;
+  if (monthIdx < 0 || monthIdx > 11) return "";
+  return `${m[1]}, ${UZ_OYLAR[monthIdx]}`;
+}
+
+// Ariza "Tasdiqlangan" (APPROVED, statusId=40) holatiga qachon o'tganini
+// holatlar tarixidan topadi — bu "Tasdiqlash sanasi" (tasdiq_davri) uchun
+// aniq manba (assessment/summary'da bunday sana yo'q).
+async function fetchTasdiqSanasi(id, token) {
+  const history = await apiFetch(
+    `${API_BASE}/Application/GetStatusHistory?id=${encodeURIComponent(id)}`,
+    token
+  );
+  const approved = (history || []).find((h) => h.toStatusId === 40);
+  return approved ? formatYearMonth(approved.changedAt) : "";
+}
+
+// Arizaning to'lov yozuvlarini (PayrollRegisterDetail/GetList) oladi va
+// eng so'nggisini (paidAt bo'yicha) qaytaradi. `applicationID` (katta ID)
+// bu endpoint uchun boshqa endpointlardan farqli maxsus kalit nomi.
+async function fetchLastPayment(id, token) {
+  const data = await apiFetch(`${API_BASE}/PayrollRegisterDetail/GetList`, token, {
+    method: "POST",
+    body: {
+      applicationID: Number(id),
+      page: 1,
+      pageSize: 20,
+      search: "",
+      sortBy: "",
+      orderType: "",
+    },
+  });
+  const rows = (data && data.rows) || [];
+  if (!rows.length) return null;
+  const sorted = rows.slice().sort((a, b) => new Date(a.paidAt) - new Date(b.paidAt));
+  const last = sorted[sorted.length - 1];
+  return {
+    // "pan" — karta raqami, tizimning o'zi qisman berkitilgan holda beradi
+    // (masalan "446614******9806") — shu ko'rinishida ishlatiladi.
+    kartaRaqami: last.pan || "",
+    tolovSum: last.totalSumm != null ? String(last.totalSumm) : "",
+    tolovSanasi: formatYearMonth(last.paidAt),
+  };
+}
+
+// "Tasdiqlash" — umumiy maydonlardan tashqari to'lov ma'lumotlarini ham
+// (tasdiqlangan sana + eng so'nggi to'lov: karta raqami/summasi/sanasi)
+// avtomatik oladi.
+async function runTasdiqlandiFill(id, letterTabId, registration, token) {
+  const payload = { ...commonLetterPayload(registration) };
+
+  try {
+    payload.tasdiqSanasi = await fetchTasdiqSanasi(id, token);
+  } catch (err) {
+    // Sana topilmasa ham qolgan maydonlar to'ldiriladi.
+  }
+
+  try {
+    const payment = await fetchLastPayment(id, token);
+    if (payment) {
+      payload.kartaRaqami = payment.kartaRaqami;
+      payload.tolovSum = payment.tolovSum;
+      payload.tolovSanasi = payment.tolovSanasi;
+    }
+  } catch (err) {
+    // To'lov ma'lumotlarini olib bo'lmasa ham umumiy maydonlar to'ldiriladi
+    // — xodim qolganini qo'lda kiritadi.
+  }
+
+  const fillReport = await fillLetterCommonFields(letterTabId, payload);
+  return { template: "tasdiqlandi", payload, fillReport };
+}
+
 // sr-new'dan kelgan holatga qarab qaysi xat shabloni mosligini aniqlaydi.
 // Status kodlari (Reference/GetStatuses) eski tizimdagi bilan bir xil:
 //   "APPROVED"          -> "tasdiqlandi"
@@ -555,6 +649,9 @@ async function runSmartFill(id) {
   }
   if (template === "toxtatilgan") {
     return runToxtatilganFill(id, letterTabId, registration, token);
+  }
+  if (template === "tasdiqlandi") {
+    return runTasdiqlandiFill(id, letterTabId, registration, token);
   }
   return runCommonFieldsFill(template, letterTabId, registration);
 }

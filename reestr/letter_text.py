@@ -156,11 +156,11 @@ def tasdiqlandi_paragraphs(data):
         (" tayinlangan hamda Kambag'al oila toifasiga kiritilgan.", {}),
     ]))
 
-    if tasdiq.get("tolovSum") or tasdiq.get("hisobRaqami"):
+    if tasdiq.get("tolovSum") or tasdiq.get("kartaRaqami"):
         davr_tolov = f"{tolov_year}-yil {tolov_month} oyi" if tolov_month else (f"{davr_oy} oyi" if davr_oy else "tegishli davr")
         paras.append(_p([
             ("Sizga ", {}), (davr_tolov, {}), (" uchun ", {}),
-            (tasdiq.get("hisobRaqami", ""), {}), (" hisob raqamiga ", {}),
+            (tasdiq.get("kartaRaqami", ""), {}), (" karta raqamiga ", {}),
             (f"{dg.format_money(tasdiq.get('tolovSum'))}", {}), (" so'm to'lab berilganligini ma’lum qilamiz.", {}),
         ]))
 

@@ -105,7 +105,7 @@ def _oddiy_almashtirishlar(data):
         "{qayta}": "qayta " if data.get("isQayta") else "",
         "{tasdiq_davri}": davr_oy,
         "{tolov_davri}": davr_tolov,
-        "{hisob_raqami}": tasdiq.get("hisobRaqami") or "",
+        "{karta_raqami}": tasdiq.get("kartaRaqami") or "",
         "{tolov_summasi}": dg.format_money(tasdiq.get("tolovSum")),
         "{tayinlash_qoshimcha}": data.get("tayinlashQoshimcha") or "",
         "{qoshimcha_malumot}": data.get("qoshimchaMalumot") or "",
@@ -131,7 +131,7 @@ def _shartlar(data):
         "{?rasmiyRad}": bool(rad.get("rasmiyRad")),
         "{?norasmiyRad}": bool(rad.get("norasmiyRad")),
         "{?uydaEmasRad}": bool(rad.get("uydaEmasRad")),
-        "{?tolov}": bool(tasdiq.get("tolovSum") or tasdiq.get("hisobRaqami")),
+        "{?tolov}": bool(tasdiq.get("tolovSum") or tasdiq.get("kartaRaqami")),
         "{?tayinlashQoshimcha}": bool(data.get("tayinlashQoshimcha")),
         "{?qoshimchaMalumot}": bool(data.get("qoshimchaMalumot")),
     }

@@ -254,7 +254,7 @@
     <div class="form-grid">
       <div class="field"><label>Tasdiqlash sanasi *</label><input type="text" id="tasdiqSanasi" name="tasdiqSanasi" placeholder="2026, Mart"><span class="hint">Masalan: 2026, Mart</span></div>
       <div class="field"><label>To'lov sanasi *</label><input type="text" id="tolovSanasi" name="tolovSanasi" placeholder="2026, Aprel"><span class="hint">Masalan: 2026, Aprel</span></div>
-      <div class="field"><label>Hisob raqami *</label><input type="text" id="hisobRaqami" name="hisobRaqami" placeholder="222222223545404"></div>
+      <div class="field"><label>Karta raqami *</label><input type="text" id="kartaRaqami" name="kartaRaqami" placeholder="446614******9806"></div>
       <div class="field"><label>To'lov summasi *</label><input type="text" id="tolovSum" name="tolovSum" placeholder="1450543.00"><span class="hint">So'mda kiriting</span></div>
     </div>
   </div>
@@ -717,7 +717,7 @@
       arizaID: getVal('arizaID'),
       template: currentTemplate,
       isQayta: isQaytaEl ? isQaytaEl.value === 'true' : false,
-      tasdiqMalumotlari: { is:false, tasdiqSanasi:'', tolovSanasi:'', tolovSum:'', hisobRaqami:'' },
+      tasdiqMalumotlari: { is:false, tasdiqSanasi:'', tolovSanasi:'', tolovSum:'', kartaRaqami:'' },
     };
 
     if (currentTemplate === 'rad'){
@@ -731,7 +731,7 @@
     } else if (currentTemplate === 'toxtatilgan'){
       data.radSabablari = { tizimSababi: getVal('tizimSababiMatni') };
     } else if (currentTemplate === 'tasdiqlandi'){
-      data.tasdiqMalumotlari = { is:true, tasdiqSanasi:getVal('tasdiqSanasi'), tolovSanasi:getVal('tolovSanasi'), tolovSum:getVal('tolovSum'), hisobRaqami:getVal('hisobRaqami') };
+      data.tasdiqMalumotlari = { is:true, tasdiqSanasi:getVal('tasdiqSanasi'), tolovSanasi:getVal('tolovSanasi'), tolovSum:getVal('tolovSum'), kartaRaqami:getVal('kartaRaqami') };
     } else if (currentTemplate === 'tayinlandi'){
       data.tayinlashQoshimcha = getVal('tayinlashQoshimcha');
     } else if (currentTemplate === 'muddat'){
@@ -769,7 +769,7 @@
       const t = data.tasdiqMalumotlari;
       if (!t.tasdiqSanasi) errors.push("Tasdiqlash sanasini kiriting!");
       if (!t.tolovSanasi) errors.push("To'lov sanasini kiriting!");
-      if (!t.hisobRaqami) errors.push("Hisob raqamini kiriting!");
+      if (!t.kartaRaqami) errors.push("Karta raqamini kiriting!");
       if (!t.tolovSum) errors.push("To'lov summasini kiriting!");
     }
     return errors;
@@ -840,7 +840,7 @@
     } else if (d.template === 'tasdiqlandi' && d.tasdiqMalumotlari){
       document.getElementById('tasdiqSanasi').value = d.tasdiqMalumotlari.tasdiqSanasi || '';
       document.getElementById('tolovSanasi').value = d.tasdiqMalumotlari.tolovSanasi || '';
-      document.getElementById('hisobRaqami').value = d.tasdiqMalumotlari.hisobRaqami || '';
+      document.getElementById('kartaRaqami').value = d.tasdiqMalumotlari.kartaRaqami || '';
       document.getElementById('tolovSum').value = d.tasdiqMalumotlari.tolovSum || '';
     } else if (d.template === 'tayinlandi'){
       document.getElementById('tayinlashQoshimcha').value = d.tayinlashQoshimcha || '';

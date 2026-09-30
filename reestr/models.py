@@ -48,7 +48,7 @@ class Xat(models.Model):
     tasdiq_sanasi = models.CharField("Tasdiqlash sanasi", max_length=100, blank=True, default="")
     tolov_sanasi = models.CharField("To'lov sanasi", max_length=100, blank=True, default="")
     tolov_sum = models.CharField("To'lov summasi", max_length=100, blank=True, default="")
-    hisob_raqami = models.CharField("Hisob raqami", max_length=100, blank=True, default="")
+    karta_raqami = models.CharField("Karta raqami", max_length=100, blank=True, default="")
 
     # tayinlandi
     tayinlash_qoshimcha = models.CharField("Qo'shimcha ma'lumot", max_length=1000, blank=True, default="")
@@ -103,7 +103,7 @@ class Xat(models.Model):
                 "tasdiqSanasi": self.tasdiq_sanasi,
                 "tolovSanasi": self.tolov_sanasi,
                 "tolovSum": self.tolov_sum,
-                "hisobRaqami": self.hisob_raqami,
+                "kartaRaqami": self.karta_raqami,
             },
             "tayinlashQoshimcha": self.tayinlash_qoshimcha,
             "qoshimchaMalumot": self.qoshimcha_malumot,
