@@ -526,13 +526,23 @@ function formatYearMonth(isoDateStr) {
 // Ariza "Tasdiqlangan" (APPROVED, statusId=40) holatiga qachon o'tganini
 // holatlar tarixidan topadi — bu "Tasdiqlash sanasi" (tasdiq_davri) uchun
 // aniq manba (assessment/summary'da bunday sana yo'q).
-async function fetchTasdiqSanasi(id, token) {
+// Shu bilan birga, xuddi shu tarixdan ariza QAYTA tekshiruvdan o'tib
+// tasdiqlanganmi (aksincha, birinchi marta o'rganilib tasdiqlanganmi)
+// ekanligini ham aniqlaydi — bunday holatlarda tizim status yozuvining
+// "note" maydoniga "Qayta tekshiruv" so'zini qo'shib qo'yadi (real
+// misolda ko'rilgan: "Qayta tekshiruv (jamoa qarori 2026-09-12): ...").
+async function fetchTasdiqlashHolati(id, token) {
   const history = await apiFetch(
     `${API_BASE}/Application/GetStatusHistory?id=${encodeURIComponent(id)}`,
     token
   );
-  const approved = (history || []).find((h) => h.toStatusId === 40);
-  return approved ? formatYearMonth(approved.changedAt) : "";
+  const rows = history || [];
+  const approved = rows.find((h) => h.toStatusId === 40);
+  const isQayta = rows.some((h) => /qayta tekshiruv/i.test(h.note || ""));
+  return {
+    tasdiqSanasi: approved ? formatYearMonth(approved.changedAt) : "",
+    isQayta,
+  };
 }
 
 // Arizaning to'lov yozuvlarini (PayrollRegisterDetail/GetList) oladi va
@@ -570,9 +580,11 @@ async function runTasdiqlandiFill(id, letterTabId, registration, token) {
   const payload = { ...commonLetterPayload(registration) };
 
   try {
-    payload.tasdiqSanasi = await fetchTasdiqSanasi(id, token);
+    const holati = await fetchTasdiqlashHolati(id, token);
+    payload.tasdiqSanasi = holati.tasdiqSanasi;
+    payload.isQayta = holati.isQayta;
   } catch (err) {
-    // Sana topilmasa ham qolgan maydonlar to'ldiriladi.
+    // Sana/holat topilmasa ham qolgan maydonlar to'ldiriladi.
   }
 
   try {

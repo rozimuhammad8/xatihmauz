@@ -145,12 +145,14 @@ def tasdiqlandi_paragraphs(data):
     tolov_year, tolov_month = dg.parse_year_month(tasdiq.get("tolovSanasi"))
     davr_oy = f"{tasdiq_year}-yil {tasdiq_month}" if tasdiq_month else f"{ariza_year}-yil {ariza_month}"
 
+    qayta = "qayta " if data.get("isQayta") else ""
     paras.append(_p([
         (data.get("fio", ""), {"bold": True}), (" sizning ", {}),
         (f"{ariza_year}-yil {ariza_day}-{ariza_month}", {"bold": True}), (" kunidan ", {}),
         (data.get("arizaMaqsadi", ""), {"bold": True}),
         (" tayinlash bo'yicha yuborgan arizangiz «Ijtimoiy himoya yagona reestri» axborot tizimiga ", {}),
-        (f"{data.get('arizaID', '')}-ID", {"bold": True}), (" raqam bilan kiritilgan va ", {}),
+        (f"{data.get('arizaID', '')}-ID", {"bold": True}), (" raqam bilan kiritilgan va dastur tomonidan ", {}),
+        (qayta, {}), ("o'rganilganda ", {}),
         (f"{davr_oy}", {"bold": True}), (" oyidan ", {}),
         (data.get("arizaMaqsadi", ""), {"bold": True}),
         (" tayinlangan hamda Kambag'al oila toifasiga kiritilgan.", {}),

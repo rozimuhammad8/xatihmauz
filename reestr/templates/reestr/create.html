@@ -221,15 +221,22 @@
     </div>
   </div>
 
-  <!-- RAD -->
-  <div class="card conditional-fields show" id="radFields">
-    <h3>Rad etish sabablari</h3>
-    <p class="sub">Kamida bittasini tanlang — matnlar sr-new.ihma.uz tizimidagi aynan shu sabablar bilan rad etilgan arizalardan olingan</p>
-
+  <!-- QAYTA O'RGANILDIMI — "rad" va "tasdiqlandi" ikkalasida ham ariza
+       qayta tekshiruv natijasida shu holatga kelishi mumkin, shuning uchun
+       bu ikkalasi uchun umumiy (shablon o'zgarganda ko'rsatish/berkitish
+       selectTemplate() da boshqariladi). -->
+  <div class="card" id="isQaytaBlock">
+    <h3>Qayta o'rganildimi?</h3>
     <div class="isqayta">
       <label class="radio-opt"><input type="radio" name="isQayta" value="true" id="isQaytaHa">Ha (qayta o'rganilganda)</label>
       <label class="radio-opt"><input type="radio" name="isQayta" value="false" id="isQaytaYoq" checked>Yo'q (o'rganilganda)</label>
     </div>
+  </div>
+
+  <!-- RAD -->
+  <div class="card conditional-fields show" id="radFields">
+    <h3>Rad etish sabablari</h3>
+    <p class="sub">Kamida bittasini tanlang — matnlar sr-new.ihma.uz tizimidagi aynan shu sabablar bilan rad etilgan arizalardan olingan</p>
 
     <label class="checkbox-row"><input type="checkbox" id="yangiAvtoRad" name="yangiAvtoRad">Yangi avtomobil mavjud (12/15 yildan kichik)</label>
     <label class="checkbox-row"><input type="checkbox" id="kopAvtoRad" name="kopAvtoRad">Bir nechta avtomobil mavjud (2 tadan ortiq)</label>
@@ -583,6 +590,7 @@
     document.querySelectorAll('.tpl-opt').forEach(el => el.classList.toggle('active', el.dataset.template === tpl));
     document.querySelectorAll('.conditional-fields').forEach(el => el.classList.toggle('show', el.id === fieldMap[tpl]));
     document.getElementById('arizaInfoGrid').style.display = TEMPLATES_WITHOUT_ARIZA_INFO.includes(tpl) ? 'none' : 'grid';
+    document.getElementById('isQaytaBlock').style.display = ['rad', 'tasdiqlandi'].includes(tpl) ? '' : 'none';
   }
   document.querySelectorAll('.tpl-opt').forEach(el => {
     el.addEventListener('click', () => selectTemplate(el.dataset.template));
