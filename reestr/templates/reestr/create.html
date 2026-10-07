@@ -93,11 +93,13 @@
   .csel-opt.selected{color:var(--accent);font-weight:700;background:var(--accent-soft)}
 
   .cdate{position:relative}
-  .cdate-trigger{width:100%;display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--main-bg);font-size:14px;color:var(--text-1);cursor:pointer;font-family:inherit;transition:.15s;text-align:left}
+  .cdate-trigger{width:100%;display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--main-bg);font-size:14px;color:var(--text-1);font-family:inherit;transition:.15s;text-align:left}
   .cdate-trigger:hover{border-color:#cfd6e0}
   .cdate-trigger svg{width:16px;height:16px;color:var(--text-3);flex-shrink:0}
   .cdate.open .cdate-trigger{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
-  .cdate-trigger .val.placeholder{color:var(--text-3)}
+  .cdate-icon{display:flex;align-items:center;justify-content:center;padding:0;border:none;background:none;cursor:pointer;color:inherit}
+  .cdate-trigger input.val{flex:1;min-width:0;border:none;outline:none;background:transparent;font:inherit;color:inherit;padding:0}
+  .cdate-trigger input.val::placeholder{color:var(--text-3)}
   .cal-panel{position:fixed;z-index:1000;width:270px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:14px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s cubic-bezier(.4,0,.2,1),transform .18s cubic-bezier(.4,0,.2,1)}
   .cdate.open .cal-panel{opacity:1;visibility:visible;transform:translateY(0)}
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -185,7 +187,7 @@
       <div class="field">
         <label>Murojaat sanasi *</label>
         <div class="cdate" id="murojaatVaqtiPicker">
-          <button type="button" class="cdate-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="val placeholder">Sanani tanlang</span></button>
+          <div class="cdate-trigger"><button type="button" class="cdate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></button><input type="text" class="val" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="kun.oy.yil"></div>
           <div class="cal-panel" hidden>
             <div class="cal-head"><button type="button" class="cal-nav" data-shift="-1">&lsaquo;</button><b class="cal-month-label"></b><button type="button" class="cal-nav" data-shift="1">&rsaquo;</button></div>
             <div class="cal-weekdays"><span>Du</span><span>Se</span><span>Ch</span><span>Pa</span><span>Ju</span><span>Sh</span><span>Ya</span></div>
@@ -208,7 +210,7 @@
       <div class="field">
         <label>Ariza sanasi *</label>
         <div class="cdate" id="arizaVaqtiPicker">
-          <button type="button" class="cdate-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="val placeholder">Sanani tanlang</span></button>
+          <div class="cdate-trigger"><button type="button" class="cdate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></button><input type="text" class="val" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="kun.oy.yil"></div>
           <div class="cal-panel" hidden>
             <div class="cal-head"><button type="button" class="cal-nav" data-shift="-1">&lsaquo;</button><b class="cal-month-label"></b><button type="button" class="cal-nav" data-shift="1">&rsaquo;</button></div>
             <div class="cal-weekdays"><span>Du</span><span>Se</span><span>Ch</span><span>Pa</span><span>Ju</span><span>Sh</span><span>Ya</span></div>
@@ -639,15 +641,43 @@
   function pad2(n){ return String(n).padStart(2,'0'); }
   function isoOf(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
   function displayOf(iso){ const [y,m,d] = iso.split('-'); return `${d}.${m}.${y}`; }
+  // Qo'lda terish: "ddmmyyyy" raqamlarini "dd.mm.yyyy" ko'rinishida
+  // avtomatik nuqtalaydi (umumiy — barcha cdate maydonlari shundan foydalanadi).
+  function formatTypedDigits(digits){
+    let out = digits.slice(0, 2);
+    if (digits.length > 2) out += '.' + digits.slice(2, 4);
+    if (digits.length > 4) out += '.' + digits.slice(4, 8);
+    return out;
+  }
+  function parseTypedDigits(digits){
+    if (digits.length !== 8) return null;
+    const d = Number(digits.slice(0, 2));
+    const m = Number(digits.slice(2, 4));
+    const y = Number(digits.slice(4, 8));
+    if (m < 1 || m > 12) return null;
+    const daysInMonth = new Date(y, m, 0).getDate();
+    if (d < 1 || d > daysInMonth) return null;
+    return `${y}-${pad2(m)}-${pad2(d)}`;
+  }
 
   function initDatepicker(rootId, hiddenId){
     const root = document.getElementById(rootId);
     const hiddenInput = document.getElementById(hiddenId);
     const trigger = root.querySelector('.cdate-trigger');
-    const valSpan = root.querySelector('.val');
+    const iconBtn = root.querySelector('.cdate-icon');
+    const valInput = root.querySelector('.val');
     const panel = root.querySelector('.cal-panel');
     let viewDate = new Date();
     let selectedISO = null;
+
+    function openPanel(){
+      if (root.classList.contains('open')) return;
+      closeAllPanels();
+      panel.hidden = false;
+      render();
+      positionPanel(trigger, panel, false);
+      requestAnimationFrame(() => root.classList.add('open'));
+    }
 
     function render(){
       root.querySelector('.cal-month-label').textContent = `${OY_NOMLARI[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
@@ -677,20 +707,35 @@
     function select(iso){
       selectedISO = iso;
       hiddenInput.value = iso;
-      valSpan.textContent = displayOf(iso);
-      valSpan.classList.remove('placeholder');
+      valInput.value = displayOf(iso);
       closeAllPanels();
     }
     function setValue(iso){
-      if (!iso){ selectedISO = null; hiddenInput.value=''; valSpan.textContent='Sanani tanlang'; valSpan.classList.add('placeholder'); viewDate = new Date(); return; }
-      selectedISO = iso; hiddenInput.value = iso; valSpan.textContent = displayOf(iso); valSpan.classList.remove('placeholder');
+      if (!iso){ selectedISO = null; hiddenInput.value=''; valInput.value=''; viewDate = new Date(); return; }
+      selectedISO = iso; hiddenInput.value = iso; valInput.value = displayOf(iso);
       const [y,m] = iso.split('-'); viewDate = new Date(Number(y), Number(m)-1, 1);
     }
-    trigger.addEventListener('click', e => {
+    iconBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const willOpen = !root.classList.contains('open');
-      closeAllPanels();
-      if (willOpen){ panel.hidden = false; render(); positionPanel(trigger, panel, false); requestAnimationFrame(()=> root.classList.add('open')); }
+      if (root.classList.contains('open')) closeAllPanels();
+      else openPanel();
+    });
+    valInput.addEventListener('focus', () => openPanel());
+    valInput.addEventListener('input', () => {
+      const digits = valInput.value.replace(/\D/g, '').slice(0, 8);
+      valInput.value = formatTypedDigits(digits);
+      if (digits.length === 8){
+        const iso = parseTypedDigits(digits);
+        if (iso){
+          selectedISO = iso;
+          hiddenInput.value = iso;
+          const [y,m] = iso.split('-'); viewDate = new Date(Number(y), Number(m)-1, 1);
+          if (!panel.hidden) render();
+        }
+      } else {
+        selectedISO = null;
+        hiddenInput.value = '';
+      }
     });
     root.addEventListener('click', e => e.stopPropagation());
     panel.querySelectorAll('.cal-nav').forEach(btn => btn.addEventListener('click', () => {
