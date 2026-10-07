@@ -31,16 +31,7 @@ const API_BASE = `${REG_HOST}/api`;
 // har bir so'rov shu muddatdan keyin bekor qilinadi.
 const API_TIMEOUT_MS = 20000;
 
-// `checkAlreadyComplete=true` (standart) — agar tab AVVALDAN "complete"
-// holatida bo'lsa, darhol qaytadi (findOrOpenTab uchun to'g'ri: allaqachon
-// yuklangan tabni qayta kutish shart emas). `false` esa shu tekshiruvni
-// o'tkazib yuboradi va faqat KEYINGI "complete" hodisasini kutadi — bu
-// chrome.tabs.reload() dan KEYIN kerak: reload chaqirilgan zahoti tab
-// holatini so'rasak, u hali ESKI "complete" holatida qolgan bo'lishi mumkin
-// (yangi yuklanish hali "loading"ga o'tmagan), shu sababli darhol (noto'g'ri)
-// qaytib ketardi — aynan shu sabab tokenni yangilash birinchi urinishda
-// ishlamay qoldi.
-function waitForTabComplete(tabId, timeoutMs = 20000, checkAlreadyComplete = true) {
+function waitForTabComplete(tabId, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
@@ -55,8 +46,6 @@ function waitForTabComplete(tabId, timeoutMs = 20000, checkAlreadyComplete = tru
       }
     }
     chrome.tabs.onUpdated.addListener(listener);
-
-    if (!checkAlreadyComplete) return;
 
     chrome.tabs.get(tabId, (tab) => {
       if (chrome.runtime.lastError) return;
@@ -139,43 +128,6 @@ async function findOpenRegistrationApplicationId() {
   });
 
   return matches[0].id;
-}
-
-// sr.ihma.uz'ning access-token cookie'si taxminan 8 soatdan keyin
-// tugaydi, lekin sahifaning o'zi buni FAQAT to'liq qayta yuklanganda
-// (RefreshToken so'rovi orqali) yangilaydi — SPA ichidagi navigatsiya bunga
-// yetarli emas. Foydalanuvchi ariza sahifasini ochib qo'yib, uzoq vaqtdan
-// keyin (masalan ertasi kuni) "To'ldirish"ni bossa, u hali ham "tizimga
-// kirgan" ko'rinadi (sahifa hech narsa demaydi), lekin cookie'dagi token
-// aslida eskirgan bo'ladi — natijada "sessiya tugagan" xatosi chiqadi,
-// garchi foydalanuvchi chiqib ketmagan bo'lsa ham. Shuning uchun tokenni
-// o'qishdan OLDIN o'sha tab avtomatik qayta yuklanadi — bu sessiya
-// tugagan-tugamaganidan qat'i nazar zararsiz (agar hali tugamagan bo'lsa,
-// reload shunchaki tokenni yangilab qo'yadi).
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function refreshRegistrationTab(id) {
-  const tabs = await chrome.tabs.query({});
-  const match = tabs.find((t) => t.url && parseRegistrationId(t.url) === String(id));
-  if (!match) return; // tab topilmadi (yopilgan bo'lishi mumkin) — token o'zi sinaladi
-  await chrome.tabs.reload(match.id);
-  try {
-    // checkAlreadyComplete=false: reload chaqirilgan zahoti tab hali ham
-    // ESKI "complete" holatida ko'rinishi mumkin — shu sabab bilan avval
-    // shu tekshiruv tufayli funksiya darhol (haqiqiy yuklanishni kutmasdan)
-    // qaytib ketardi.
-    await waitForTabComplete(match.id, 20000, false);
-  } catch {
-    return;
-  }
-  // Sahifa brauzer darajasida "yuklandi" (complete) holatiga yetgach ham,
-  // RefreshToken so'rovining o'zi sahifaning ishga tushirish skripti orqali
-  // ASINXRON amalga oshadi (birinchi sinovda aynan shu sabab ishlamay
-  // qoldi — cookie hali yangilanmagan paytda o'qib qo'yilgan edi). Shuning
-  // uchun qisqa qo'shimcha kutish beriladi.
-  await delay(1500);
 }
 
 // sr.ihma.uz keeps its access token in an httpOnly "Authorization"
@@ -679,7 +631,6 @@ function decideTemplate(statusCode) {
 // itself (so the user sees the same selection they'd have made by hand),
 // then fills it from the matching source.
 async function runSmartFill(id) {
-  await refreshRegistrationTab(id);
   const token = await getAuthTokenFromCookie();
   const registration = await apiFetch(
     `${API_BASE}/Application/Get?id=${encodeURIComponent(id)}`,
