@@ -236,7 +236,7 @@ def income_text(items):
     )
 
 
-# sr-new.ihma.uz'ning o'zi rad etish sababi sifatida ishlatadigan ANIQ jumla
+# sr.ihma.uz'ning o'zi rad etish sababi sifatida ishlatadigan ANIQ jumla
 # bo'laklari (Eligibility/GetBySummary -> assessment.rejectReasonText'dan
 # ko'plab haqiqiy rad etilgan arizalarni solishtirib olingan — har biri
 # turli arizalarda so'zma-so'z bir xil chiqadi, faqat qaysi kriteriylar mos
@@ -265,7 +265,7 @@ SABAB_DAROMAD = (
 def tanlangan_sabablar_matni(rad):
     """yangiAvtoRad/kopAvtoRad/kochmasMulkRad/daromadRad bayroqlaridan
     tanlanganlarini bitta jumlaga (vergul bilan) birlashtiradi — xuddi
-    sr-new.ihma.uz'ning o'zi bir nechta sabab bir vaqtda chiqqanda
+    sr.ihma.uz'ning o'zi bir nechta sabab bir vaqtda chiqqanda
     qiladiganidek."""
     matnlar = []
     if rad.get("yangiAvtoRad"):

@@ -78,7 +78,7 @@ function describeFillResult(message) {
 }
 
 // Asks the background service worker which applicationId is currently open
-// on a sr-new.ihma.uz/applications/<id> tab. No manual id entry anymore —
+// on a sr.ihma.uz/applications/<id> tab. No manual id entry anymore —
 // the user is expected to already have that ariza open.
 function detectApplicationId() {
   return new Promise((resolve) => {
@@ -98,7 +98,7 @@ async function init() {
 
   if (!id) {
     detectedEl.textContent =
-      "❌ Ariza sahifasi topilmadi. Avval sr-new.ihma.uz'da kerakli arizani oching (/applications/<id>).";
+      "❌ Ariza sahifasi topilmadi. Avval sr.ihma.uz'da kerakli arizani oching (/applications/<id>).";
     fillBtn.disabled = true;
   } else {
     detectedEl.innerHTML = `✅ Aniqlangan ID: <span class="id">${id}</span>`;

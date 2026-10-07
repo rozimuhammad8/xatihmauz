@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "IHMA Reestr — Autofill",
-  "version": "3.3.0",
-  "description": "sr-new.ihma.uz dagi ariza (Rad etish, To'lov to'xtatilgan, Tasdiqlash, Tayinlash, Ariza kiritilgan) ma'lumotlarini API orqali olib, ariza holatiga (statusId) qarab mos xat shablonini o'zi aniqlab, Reestr tizimidagi xat formasiga avtomatik to'ldiradi.",
+  "version": "4.0.0",
+  "description": "sr.ihma.uz dagi ariza (Rad etish, To'lov to'xtatilgan, Tasdiqlash, Tayinlash, Ariza kiritilgan) ma'lumotlarini API orqali olib, ariza holatiga (statusId) qarab mos xat shablonini o'zi aniqlab, Reestr tizimidagi xat formasiga avtomatik to'ldiradi.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "IHMA Reestr Autofill"
@@ -19,7 +19,7 @@
   "host_permissions": [
     "http://127.0.0.1:8000/*",
     "http://localhost:8000/*",
-    "https://sr-new.ihma.uz/*",
+    "https://sr.ihma.uz/*",
     "https://xatihmauz.pythonanywhere.com/*"
   ]
 }

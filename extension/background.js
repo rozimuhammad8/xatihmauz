@@ -1,16 +1,16 @@
-// REG_HOST/API_BASE — haqiqiy tizim (sr-new.ihma.uz), faqat o'qish uchun.
+// REG_HOST/API_BASE — haqiqiy tizim (sr.ihma.uz), faqat o'qish uchun.
 // Reestr tizimi (o'zimizning Django ilovamiz) manzili har doim shu — endi
 // sozlanmaydi (avval popup orqali o'zgartirish mumkin edi, lekin bu ikki
 // faylda ikkita mustaqil DEFAULT_LETTER_HOST doimiysi orqali amalga
 // oshirilgan edi va ular mos kelmay qolgan holat haqiqiy xatoga sabab
 // bo'lgan — shuning uchun endi bitta qattiq yozilgan manzil ishlatiladi).
 const LETTER_HOST = "https://xatihmauz.pythonanywhere.com";
-const REG_HOST = "https://sr-new.ihma.uz";
+const REG_HOST = "https://sr.ihma.uz";
 
 // Xat yaratish sahifasi "/reestr/create/" (Django URL tuzilishi:
 // config/urls.py -> "reestr/" -> reestr/urls.py -> "create/"). Sahifaga kirish
 // login talab qiladi (reestr_talab) — foydalanuvchi allaqachon shu saytga
-// tizimga kirgan bo'lishi kerak (xuddi sr-new.ihma.uz'da bo'lgani kabi).
+// tizimga kirgan bo'lishi kerak (xuddi sr.ihma.uz'da bo'lgani kabi).
 const LETTER_CREATE_PATH = "/reestr/create";
 
 // Django login sahifasi — bu yerga tushib qolsak, xodim tizimga kirmagan.
@@ -27,7 +27,7 @@ const REG_ORIGIN_URL = new URL(REG_HOST);
 const REG_ORIGIN = { hostname: REG_ORIGIN_URL.hostname, port: REG_ORIGIN_URL.port };
 const API_BASE = `${REG_HOST}/api`;
 
-// sr-new.ihma.uz javob bermay qolsa, kengaytma cheksiz kutib qolmasligi kerak —
+// sr.ihma.uz javob bermay qolsa, kengaytma cheksiz kutib qolmasligi kerak —
 // har bir so'rov shu muddatdan keyin bekor qilinadi.
 const API_TIMEOUT_MS = 20000;
 
@@ -101,7 +101,7 @@ async function findOrOpenTab(matchFn, createUrl) {
 }
 
 // Extracts the applicationId from a "/applications/<id>" detail-page URL, or
-// null if the URL isn't on that page. sr-new.ihma.uz is a client-routed SPA:
+// null if the URL isn't on that page. sr.ihma.uz is a client-routed SPA:
 // the id lives in the PATH (unlike the old system, which used ?id=... on
 // "/registration/details/view").
 function parseRegistrationId(url) {
@@ -109,7 +109,7 @@ function parseRegistrationId(url) {
     const u = new URL(url);
     if (u.hostname !== REG_ORIGIN.hostname || u.port !== REG_ORIGIN.port) return null;
     // Qat'iy "yo'l ANIQ /applications/<raqam> bilan tugashi kerak" (oldingi
-    // $ bilan tugaydigan qoida) endi ishlatilmaydi — sr-new.ihma.uz manzil
+    // $ bilan tugaydigan qoida) endi ishlatilmaydi — sr.ihma.uz manzil
     // oxiriga qo'shimcha bo'lim/parametr qo'shsa (masalan
     // "/applications/123/baholash" yoki "/applications/123?tab=...") ham
     // ID baribir topilishi uchun faqat BOSHLANISHI shu shablonga mos
@@ -141,7 +141,7 @@ async function findOpenRegistrationApplicationId() {
   return matches[0].id;
 }
 
-// sr-new.ihma.uz'ning access-token cookie'si taxminan 8 soatdan keyin
+// sr.ihma.uz'ning access-token cookie'si taxminan 8 soatdan keyin
 // tugaydi, lekin sahifaning o'zi buni FAQAT to'liq qayta yuklanganda
 // (RefreshToken so'rovi orqali) yangilaydi — SPA ichidagi navigatsiya bunga
 // yetarli emas. Foydalanuvchi ariza sahifasini ochib qo'yib, uzoq vaqtdan
@@ -178,18 +178,18 @@ async function refreshRegistrationTab(id) {
   await delay(1500);
 }
 
-// sr-new.ihma.uz keeps its access token in an httpOnly "Authorization"
+// sr.ihma.uz keeps its access token in an httpOnly "Authorization"
 // cookie (unlike the old system, which kept a plain, JS-readable token in
 // sessionStorage) — so it can't be read via a content script anymore. The
 // chrome.cookies API can read it directly, from the background service
 // worker, without needing any tab open at all.
 //
-// ihma.uz'da bir nechta sub-domen bor (sr.ihma.uz, sr-new.ihma.uz, va
-// boshqalar), har biri o'zining "Authorization" nomli cookie'sini
+// ihma.uz'da bir nechta sub-domen bor (sr.ihma.uz, imp.ihma.uz, ins.sr.ihma.uz
+// va boshqalar), har biri o'zining "Authorization" nomli cookie'sini
 // o'rnatishi mumkin. Agar ulardan biri cookie'sini butun ".ihma.uz"
-// domeniga (sub-domenidan mustaqil) o'rnatgan bo'lsa, u sr-new.ihma.uz'ga
+// domeniga (sub-domenidan mustaqil) o'rnatgan bo'lsa, u sr.ihma.uz'ga
 // so'rov yuborilganda ham qo'shilib ketishi mumkin edi. Shuning uchun
-// olingan cookie'ning domeni ANIQ "sr-new.ihma.uz" ekanligi tekshiriladi —
+// olingan cookie'ning domeni ANIQ "sr.ihma.uz" ekanligi tekshiriladi —
 // boshqacha bo'lsa, tokendan foydalanish o'rniga aniq xato ko'rsatiladi
 // (chrome.cookies.getAll() bu Chrome versiyasida url-filter bilan doim
 // bo'sh natija qaytargani uchun ishlatilmadi — get() esa ishonchli ishlaydi,
@@ -227,14 +227,14 @@ async function getAuthTokenFromCookie() {
   const cookie = await chrome.cookies.get({ url: `${REG_HOST}/`, name: "Authorization" });
   if (!cookie || !cookie.value) {
     throw new Error(
-      "sr-new.ihma.uz sessiyasi topilmadi. O'sha saytda avval tizimga kiring."
+      "sr.ihma.uz sessiyasi topilmadi. O'sha saytda avval tizimga kiring."
     );
   }
   if (cookie.domain !== REG_ORIGIN.hostname) {
     throw new Error(
       `Token noto'g'ri domenga tegishli (${cookie.domain}, kutilgan: ` +
       `${REG_ORIGIN.hostname}) — ehtimol ihma.uz'ning boshqa sahifasi bilan ` +
-      "aralashib qoldi. sr-new.ihma.uz sahifasini qayta yuklab ko'ring."
+      "aralashib qoldi. sr.ihma.uz sahifasini qayta yuklab ko'ring."
     );
   }
 
@@ -394,7 +394,7 @@ async function fillLetterCommonFields(letterTabId, letterPayload) {
 }
 
 // ============================================================
-// sr-new.ihma.uz API OQIMI
+// sr.ihma.uz API OQIMI
 // ============================================================
 async function apiFetch(url, token, { method = "GET", body } = {}) {
   // AbortController'siz javob bermayotgan server kengaytmani muzlatib
@@ -418,7 +418,7 @@ async function apiFetch(url, token, { method = "GET", body } = {}) {
     if (err.name === "AbortError") {
       throw new Error(
         `Server ${API_TIMEOUT_MS / 1000} soniyada javob bermadi. ` +
-        "Internet aloqasini yoki sr-new.ihma.uz ishlayotganini tekshiring."
+        "Internet aloqasini yoki sr.ihma.uz ishlayotganini tekshiring."
       );
     }
     throw new Error(`Serverga ulanib bo'lmadi: ${err.message}`);
@@ -429,21 +429,21 @@ async function apiFetch(url, token, { method = "GET", body } = {}) {
   // 401 va 403 ikki xil sabab: 401 — token haqiqatan yaroqsiz/eskirgan
   // (qaytadan kirish kerak). 403 — token yaroqli, lekin shu hisobda o'sha
   // amal (masalan "Moslik baholash" bo'limini ko'rish) uchun ruxsat yo'q —
-  // bu sessiya emas, balki ROL/RUXSAT masalasi (sr-new.ihma.uz'da
+  // bu sessiya emas, balki ROL/RUXSAT masalasi (sr.ihma.uz'da
   // administratorga murojaat qilish kerak). Ikkalasini bitta "sessiya
   // tugagan" deb ko'rsatish chalg'ituvchi edi — xodim hali tizimga kirgan
   // bo'lsa ham shu xabarni ko'rib chalkashib qolgan holat aynan shu edi.
   if (res.status === 401) {
     throw new Error(
-      "sr-new.ihma.uz sessiyasi tugagan. O'sha sahifada qaytadan tizimga kiring."
+      "sr.ihma.uz sessiyasi tugagan. O'sha sahifada qaytadan tizimga kiring."
     );
   }
   if (res.status === 403) {
     throw new Error(
-      `sr-new.ihma.uz sizning hisobingizga bu amal uchun ruxsat bermadi ` +
+      `sr.ihma.uz sizning hisobingizga bu amal uchun ruxsat bermadi ` +
       `(${new URL(url).pathname}). Bu sessiya tugashi emas — hisobingizda ` +
       `kerakli bo'limga (masalan "Moslik baholash") kirish huquqi yo'qligi ` +
-      `mumkin. sr-new.ihma.uz administratoriga murojaat qiling.`
+      `mumkin. sr.ihma.uz administratoriga murojaat qiling.`
     );
   }
   if (!res.ok) {
@@ -495,7 +495,7 @@ async function fetchCurrentSummary(id, token) {
 // household.checks[] dagi (passed:false) kriteriy kodini Django formasidagi
 // checkbox id'siga moslashtiradi. Har bir checkbox uchun ANIQ matn
 // reestr/docx_generator.py (SABAB_YANGI_AVTO/SABAB_KOP_AVTO/...) da qattiq
-// yozilgan — o'sha matnlar sr-new.ihma.uz'ning bir qancha haqiqiy rad
+// yozilgan — o'sha matnlar sr.ihma.uz'ning bir qancha haqiqiy rad
 // etilgan arizasidan (rejectReasonText) olingan, so'zma-so'z bir xil chiqadi.
 const CRITERION_TO_CHECKBOX = {
   HH_NEW_VEHICLES_CHECK: "yangiAvtoRad",
@@ -504,11 +504,11 @@ const CRITERION_TO_CHECKBOX = {
   HH_INCOME_CHECK: "daromadRad",
 };
 
-// "Rad etish" — erkin matn emas, checkboxlar orqali ishlaydi: sr-new.ihma.uz
+// "Rad etish" — erkin matn emas, checkboxlar orqali ishlaydi: sr.ihma.uz
 // javobidagi har bir mos tushgan (passed:false) kriteriy uchun mos
 // checkbox belgilanadi, matnning o'zi Django tomonida allaqachon tayyor
 // (qarang: CRITERION_TO_CHECKBOX yuqorida). "Uyda bo'lmagan" avtomatik
-// aniqlanmaydi — xodim o'zi belgilaydi (sr-new'da bunga mos kriteriy yo'q).
+// aniqlanmaydi — xodim o'zi belgilaydi (sr.ihma.uz'da bunga mos kriteriy yo'q).
 async function runRadFill(id, letterTabId, registration, statusCode, token) {
   const payload = {
     ...commonLetterPayload(registration),
@@ -536,7 +536,7 @@ async function runRadFill(id, letterTabId, registration, statusCode, token) {
   return { template: "rad", payload, fillReport };
 }
 
-// "To'lov to'xtatilgan" — sr-new.ihma.uz'da hali doimiy kriteriy-checkbox
+// "To'lov to'xtatilgan" — sr.ihma.uz'da hali doimiy kriteriy-checkbox
 // xaritasi yo'q (sabablar juda xilma-xil: bandlik, so'rovnoma va h.k.),
 // shuning uchun bu shablon hamon tizimning tayyor jumlasini
 // (assessment.rejectReasonText) to'g'ridan-to'g'ri erkin matn maydoniga
@@ -654,7 +654,7 @@ async function runTasdiqlandiFill(id, letterTabId, registration, token) {
   return { template: "tasdiqlandi", payload, fillReport };
 }
 
-// sr-new'dan kelgan holatga qarab qaysi xat shabloni mosligini aniqlaydi.
+// sr.ihma.uz'dan kelgan holatga qarab qaysi xat shabloni mosligini aniqlaydi.
 // Status kodlari (Reference/GetStatuses) eski tizimdagi bilan bir xil:
 //   "APPROVED"          -> "tasdiqlandi"
 //   "WAITING LIST"       -> "tayinlandi"
@@ -674,7 +674,7 @@ function decideTemplate(statusCode) {
 }
 
 // Entry point for the "To'ldirish" button. Self-sufficient given just the
-// id: opens/finds the letter-create page, asks sr-new.ihma.uz what the
+// id: opens/finds the letter-create page, asks sr.ihma.uz what the
 // ariza's real outcome is, clicks the matching template card on the page
 // itself (so the user sees the same selection they'd have made by hand),
 // then fills it from the matching source.

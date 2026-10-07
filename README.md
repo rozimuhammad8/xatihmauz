@@ -8,7 +8,7 @@ iborat.
 |---|---|---|---|
 | **Bosh ijtimoiy** | `bosh_ijtimoiy` | `/ariza/` | "Saxovat va ko'mak" arizalariga javob xatlari + xizmat hujjatlari |
 | **Reestr tizimi** | `reestr` | `/reestr/` | "Ijtimoiy himoya yagona reyestri" bo'yicha javob xatlari |
-| **Chrome kengaytmasi** | — | — | `sr-new.ihma.uz` dan ma'lumot olib, reestr formasini avtomatik to'ldiradi |
+| **Chrome kengaytmasi** | — | — | `sr.ihma.uz` dan ma'lumot olib, reestr formasini avtomatik to'ldiradi |
 
 Barcha hujjat matnlari [`Shablons/`](Shablons) papkasidagi `.docx` fayllarda —
 ularni Wordda ochib tahrirlash mumkin, kodga tegish shart emas.
@@ -107,7 +107,7 @@ Reestr tizimi manzili endi sozlash talab qilmaydi — kengaytma doim
 `https://xatihmauz.pythonanywhere.com` ga to'ldiradi (kodda qattiq yozilgan:
 `extension/background.js` dagi `LETTER_HOST`).
 
-Ishlatish: `sr-new.ihma.uz` da arizani oching → kengaytma belgisini bosing →
+Ishlatish: `sr.ihma.uz` da arizani oching → kengaytma belgisini bosing →
 **To'ldirish**. Shablon ariza holatiga (`statusId`) qarab avtomatik tanlanadi.
 Xat avtomatik yuborilmaydi — tekshirib, o'zingiz saqlaysiz.
 
