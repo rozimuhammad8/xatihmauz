@@ -108,7 +108,13 @@ function parseRegistrationId(url) {
   try {
     const u = new URL(url);
     if (u.hostname !== REG_ORIGIN.hostname || u.port !== REG_ORIGIN.port) return null;
-    const m = u.pathname.replace(/\/+$/, "").match(/^\/applications\/(\d+)$/);
+    // Qat'iy "yo'l ANIQ /applications/<raqam> bilan tugashi kerak" (oldingi
+    // $ bilan tugaydigan qoida) endi ishlatilmaydi — sr-new.ihma.uz manzil
+    // oxiriga qo'shimcha bo'lim/parametr qo'shsa (masalan
+    // "/applications/123/baholash" yoki "/applications/123?tab=...") ham
+    // ID baribir topilishi uchun faqat BOSHLANISHI shu shablonga mos
+    // kelishi talab qilinadi.
+    const m = u.pathname.match(/^\/applications\/(\d+)(?:\/|$)/);
     return m ? m[1] : null;
   } catch {
     return null;
@@ -188,6 +194,35 @@ async function refreshRegistrationTab(id) {
 // (chrome.cookies.getAll() bu Chrome versiyasida url-filter bilan doim
 // bo'sh natija qaytargani uchun ishlatilmadi — get() esa ishonchli ishlaydi,
 // faqat domenni qo'lda tasdiqlash kerak).
+// Ba'zan (masalan bir nechta Set-Cookie javobi ustma-ust tushganda yoki
+// brauzer/proksi o'ziga xos holatida) cookie qiymati IKKITA token
+// birlashgan holda kelishi mumkin — masalan bo'sh joy, ";" yoki boshqa
+// ajratuvchi bilan qo'shilib ketgan. Haqiqiy JWT har doim uchta nuqta bilan
+// ajratilgan segmentdan iborat (header.payload.signature) — shu shaklga
+// mos keladigan segmentlar orasidan ENG QISQASI (ya'ni haqiqiy, bitta
+// to'liq token) tanlanadi.
+function extractJwtCandidates(rawValue) {
+  const parts = String(rawValue || "").split(/[\s;,]+/).filter(Boolean);
+  const jwtLike = parts.filter((c) => c.split(".").length === 3);
+  return jwtLike.length ? jwtLike : [String(rawValue || "")];
+}
+
+// Token haqiqatan ishlaydimi — engil, autentifikatsiya talab qiladigan
+// so'rov (GetProfileData) bilan tekshiriladi. Uzunlikka qarab taxmin
+// QILINMAYDI (qaysi biri "to'g'ri" ekanini oldindan bilib bo'lmaydi —
+// ba'zan qisqasi, ba'zan uzunrog'i haqiqiy token bo'lishi mumkin), faqat
+// haqiqatan ishlashiga qarab tanlanadi.
+async function tokenIshlaydimi(token) {
+  try {
+    const res = await fetch(`${API_BASE}/User/GetProfileData`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function getAuthTokenFromCookie() {
   const cookie = await chrome.cookies.get({ url: `${REG_HOST}/`, name: "Authorization" });
   if (!cookie || !cookie.value) {
@@ -202,7 +237,23 @@ async function getAuthTokenFromCookie() {
       "aralashib qoldi. sr-new.ihma.uz sahifasini qayta yuklab ko'ring."
     );
   }
-  return cookie.value;
+
+  const candidates = extractJwtCandidates(cookie.value);
+  if (candidates.length === 1) {
+    return candidates[0];
+  }
+
+  // Cookie qiymatida bir nechta (JWT shaklidagi) nomzod bor — har birini
+  // navbati bilan HAQIQIY so'rov bilan sinab, ishlaydiganini tanlaymiz.
+  for (const candidate of candidates) {
+    if (await tokenIshlaydimi(candidate)) {
+      return candidate;
+    }
+  }
+  // Hech biri tasdiqlanmasa ham birinchisini qaytaramiz — keyingi haqiqiy
+  // so'rov baribir aniq ("sessiya tugagan") xato bilan muvaffaqiyatsiz
+  // tugaydi, bu yerda jim qolish noto'g'ri bo'lardi.
+  return candidates[0];
 }
 
 // Runs inside the letter page. Clicks the template card matching `template`
