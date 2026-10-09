@@ -1028,8 +1028,8 @@
 
     docxShowStatus("Fayl o'qilmoqda...", '');
     try {
-      const fullText = await docxReadFullText(file);
-      const fields = docxParseFields(fullText);
+      const { fullText, tables } = await docxReadDocument(file);
+      const fields = docxParseFields(fullText, tables);
 
       let filledCount = 0;
       if (fields.murojaatfrom){ document.getElementById('id_tashkilot').value = fields.murojaatfrom; filledCount++; }
