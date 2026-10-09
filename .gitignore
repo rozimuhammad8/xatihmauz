@@ -6,3 +6,4 @@ __pycache__/
 staticfiles/
 logs/
 *.docx.tmp
+db.sqlite3
