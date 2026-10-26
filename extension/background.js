@@ -331,17 +331,9 @@ function fillLetterForm(payload) {
     el.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
   }
-  function setCheck(id, value) {
-    const el = document.getElementById(id);
-    if (!el || !value) return false;
-    el.checked = true;
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-    return true;
-  }
-
   const filled = {
     arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false,
-    tizimSababi: false, yangiAvtoRad: false, kopAvtoRad: false, kochmasMulkRad: false, daromadRad: false,
+    tizimSababi: false, radTizimSababi: false,
     tasdiqSanasi: false, tolovSanasi: false, tolovSum: false, kartaRaqami: false,
   };
 
@@ -358,13 +350,22 @@ function fillLetterForm(payload) {
     }
   }
 
-  // "Rad etish" — checkboxlar orqali (qarang: runRadFill/CRITERION_TO_CHECKBOX).
-  // Matnning o'zi Django tomonida qattiq yozilgan, shuning uchun bu yerda
-  // faqat mos katakcha belgilanadi.
-  filled.yangiAvtoRad = setCheck("yangiAvtoRad", payload.yangiAvtoRad);
-  filled.kopAvtoRad = setCheck("kopAvtoRad", payload.kopAvtoRad);
-  filled.kochmasMulkRad = setCheck("kochmasMulkRad", payload.kochmasMulkRad);
-  filled.daromadRad = setCheck("daromadRad", payload.daromadRad);
+  // "Rad etish" — avtomobil/ko'chmas mulk/rasmiy daromad kabi batafsil
+  // ma'lumotlar (yili, davlat raqami, kadastr raqami va h.k.) sr.ihma.uz
+  // API'sida tuzilgan shaklda yo'q, shuning uchun bular doim xodim
+  // tomonidan qo'lda kiritiladi (qarang: runRadFill). Faqat tizim o'zi
+  // hisoblab bergan xulosa matni (mavjud bo'lsa) avtomatik qo'yiladi va
+  // "Tizim tomonidan aniqlangan sabab" katakchasi avtomatik belgilanadi.
+  if (payload.radTizimSababi !== undefined) {
+    if (payload.radTizimSababi) {
+      const toggle = document.getElementById("tizimSababiToggle");
+      if (toggle) {
+        toggle.checked = true;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+    filled.radTizimSababi = setVal("radTizimSababiMatni", payload.radTizimSababi);
+  }
 
   // "To'lov to'xtatilgan" — bitta tayyor sabab matni (tizim o'zi hisoblab
   // bergan xulosa) erkin matn maydoniga qo'yiladi (qarang: runToxtatilganFill).
@@ -490,44 +491,26 @@ async function fetchCurrentSummary(id, token) {
   );
 }
 
-// household.checks[] dagi (passed:false) kriteriy kodini Django formasidagi
-// checkbox id'siga moslashtiradi. Har bir checkbox uchun ANIQ matn
-// reestr/docx_generator.py (SABAB_YANGI_AVTO/SABAB_KOP_AVTO/...) da qattiq
-// yozilgan — o'sha matnlar sr.ihma.uz'ning bir qancha haqiqiy rad
-// etilgan arizasidan (rejectReasonText) olingan, so'zma-so'z bir xil chiqadi.
-const CRITERION_TO_CHECKBOX = {
-  HH_NEW_VEHICLES_CHECK: "yangiAvtoRad",
-  HH_VEHICLES_CHECK: "kopAvtoRad",
-  HH_PROPERTIES_CHECK: "kochmasMulkRad",
-  HH_INCOME_CHECK: "daromadRad",
-};
-
-// "Rad etish" — erkin matn emas, checkboxlar orqali ishlaydi: sr.ihma.uz
-// javobidagi har bir mos tushgan (passed:false) kriteriy uchun mos
-// checkbox belgilanadi, matnning o'zi Django tomonida allaqachon tayyor
-// (qarang: CRITERION_TO_CHECKBOX yuqorida). "Uyda bo'lmagan" avtomatik
-// aniqlanmaydi — xodim o'zi belgilaydi (sr.ihma.uz'da bunga mos kriteriy yo'q).
+// "Rad etish" — avtomobil (yili/rusumi/davlat raqami), ko'chmas mulk
+// (manzil/kadastr) va rasmiy daromad (egasi/tashkilot/miqdor) kabi
+// batafsil ma'lumotlar sr.ihma.uz API'sida tuzilgan shaklda berilmaydi
+// (faqat qaysi mezon o'tmagani — household.checks[].passed — ma'lum,
+// raqamlar emas), shuning uchun bular har doim xodim tomonidan Django
+// formasida qo'lda kiritiladi. Avtomatik faqat tizim o'zi hisoblab
+// bergan umumiy xulosa matni (mavjud bo'lsa) qo'yiladi.
 async function runRadFill(id, letterTabId, registration, statusCode, token) {
   const payload = {
     ...commonLetterPayload(registration),
     isQayta: statusCode === "RECHECK_REJECTED",
-    yangiAvtoRad: false,
-    kopAvtoRad: false,
-    kochmasMulkRad: false,
-    daromadRad: false,
+    radTizimSababi: "",
   };
 
   try {
     const summary = await fetchCurrentSummary(id, token);
-    const checks = (summary && summary.household && summary.household.checks) || [];
-    checks.forEach((c) => {
-      const field = CRITERION_TO_CHECKBOX[c.code];
-      if (field && c.passed === false) payload[field] = true;
-    });
+    payload.radTizimSababi = (summary && summary.assessment && summary.assessment.rejectReasonText) || "";
   } catch (err) {
-    // Sabablarni olib bo'lmasa ham, umumiy maydonlar (ariza raqami/maqsadi/
-    // sanasi) baribir to'ldiriladi — xodim kerakli katakchani qo'lda
-    // belgilaydi (popup shu holatni alohida ko'rsatadi).
+    // Sabab matnini olib bo'lmasa ham, umumiy maydonlar baribir to'ldiriladi
+    // — xodim sabab bo'limini to'liq qo'lda to'ldiradi.
   }
 
   const fillReport = await fillLetterCommonFields(letterTabId, payload);

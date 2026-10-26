@@ -78,10 +78,6 @@ def _validate_payload(payload):
         rad = payload.get("radSabablari") or {}
         has_reason = (
             rad.get("tizimSababi")
-            or rad.get("yangiAvtoRad")
-            or rad.get("kopAvtoRad")
-            or rad.get("kochmasMulkRad")
-            or rad.get("daromadRad")
             or rad.get("uydaEmasRad")
             or rad.get("norasmiyRad")
             or (rad.get("uyRad") and len(rad["uyRad"]) > 0)
