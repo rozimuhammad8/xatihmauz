@@ -175,18 +175,64 @@ async function tokenIshlaydimi(token) {
   }
 }
 
+// ihma.uz'da BIR VAQTNING O'ZIDA ikkita "Authorization" cookie turishi
+// mumkin ekanligi aniqlandi (DevTools orqali tasdiqlangan): biri aynan
+// sr.ihma.uz'ga (host-only, tor), ikkinchisi butun ".ihma.uz"ga (keng,
+// boshqa subdomen — masalan ins.sr.ihma.uz — ham o'rnatgan/yangilagan
+// bo'lishi mumkin). `chrome.cookies.get()` ikkalasidan FAQAT bittasini
+// qaytaradi va qaysi birini tanlashi kafolatlanmagan — shuning uchun
+// `getAll()` bilan HAMMASI olinadi va orasidan eng tor ko'lamlisi
+// (host-only, aynan sr.ihma.uz) qo'lda tanlanadi.
+function eng_mos_cookieni_tanlash(cookies) {
+  const nomzodlar = cookies.filter((c) => {
+    const domen = c.domain.replace(/^\./, "");
+    return REG_ORIGIN.hostname === domen || REG_ORIGIN.hostname.endsWith("." + domen);
+  });
+  if (!nomzodlar.length) return null;
+  // Ball: host-only + aynan sr.ihma.uz ikkalasi ham bo'lsa eng yuqori ball —
+  // shunday cookie faqat sr.ihma.uz'ning o'zi tomonidan o'rnatilgan bo'lishi
+  // MUMKIN (RFC 6265 — boshqa host buni soxtalashtira olmaydi).
+  nomzodlar.sort((a, b) => {
+    const ball = (c) =>
+      (c.hostOnly ? 2 : 0) + (c.domain.replace(/^\./, "") === REG_ORIGIN.hostname ? 1 : 0);
+    return ball(b) - ball(a);
+  });
+  return nomzodlar[0];
+}
+
 async function getAuthTokenFromCookie() {
-  const cookie = await chrome.cookies.get({ url: `${REG_HOST}/`, name: "Authorization" });
+  // `getAll({url})` ba'zi Chrome versiyalarida doim bo'sh natija qaytargani
+  // uchun (avval sinab ko'rilgan), faqat `name` bo'yicha so'raladi va mos
+  // domenlar o'zimiz tomonidan filtrlanadi. Agar bu ham bo'sh qaytsa (eski
+  // muammo takrorlansa), yagona natija beradigan `get()`ga qaytiladi —
+  // kengaytma shu holatda ham butunlay ishlamay qolmasligi uchun.
+  let cookie = null;
+  try {
+    const hammasi = await chrome.cookies.getAll({ name: "Authorization" });
+    cookie = eng_mos_cookieni_tanlash(hammasi || []);
+  } catch {
+    cookie = null;
+  }
+  if (!cookie) {
+    cookie = await chrome.cookies.get({ url: `${REG_HOST}/`, name: "Authorization" });
+  }
+
   if (!cookie || !cookie.value) {
     throw new Error(
       "sr.ihma.uz sessiyasi topilmadi. O'sha saytda avval tizimga kiring."
     );
   }
-  if (cookie.domain !== REG_ORIGIN.hostname) {
+  const cookieDomeni = cookie.domain.replace(/^\./, "");
+  if (cookieDomeni !== REG_ORIGIN.hostname && !cookie.hostOnly) {
+    // Faqat sr.ihma.uz'ga xos, host-only cookie topilmadi — qolgani
+    // (masalan ".ihma.uz" darajasidagi umumiy cookie) boshqa subdomenga
+    // tegishli bo'lishi mumkin, token noto'g'ri bo'lib chiqishi mumkin.
     throw new Error(
-      `Token noto'g'ri domenga tegishli (${cookie.domain}, kutilgan: ` +
-      `${REG_ORIGIN.hostname}) — ehtimol ihma.uz'ning boshqa sahifasi bilan ` +
-      "aralashib qoldi. sr.ihma.uz sahifasini qayta yuklab ko'ring."
+      `Faqat sr.ihma.uz'ga xos sessiya topilmadi (mavjud cookie domeni: ` +
+      `${cookie.domain}) — token ihma.uz'ning boshqa sahifasi (masalan ` +
+      "boshqa subdomen) bilan aralashib qolgan bo'lishi mumkin. Boshqa " +
+      "ihma.uz sahifalaridan chiqib, faqat sr.ihma.uz'da qaytadan tizimga " +
+      "kiring."
     );
   }
 
