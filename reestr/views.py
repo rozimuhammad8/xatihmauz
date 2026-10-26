@@ -36,6 +36,87 @@ XAT_FROM = [
     ("Agentlik Ishonch telefoni", "O‘zbekiston Respublikasi Prezident huzuridagi Ijtimoiy himoya milliy Agentligi Andijon viloyat boshqarmasi Andijon tuman \"Inson\" Ijtimoiy xizmatlar markazi ishonch telefoni"),
 ]
 
+# "Norasmiy daromad mavjud" tanlanganda qaysi turdagi norasmiy bandlik
+# ekanligini tanlash/yozish uchun. Ro'yxat O'zbekiston Respublikasi
+# Prezidentining 2025-yil 19-martdagi PF-50-son Farmoni bilan tasdiqlangan
+# "o'zini o'zi band qilgan shaxslar" shug'ullanishi mumkin bo'lgan faoliyat
+# turlari ro'yxatidan olingan — xodim ro'yxatdan tanlashi yoki erkin matn
+# yozishi mumkin (forma erkin matnni ham qabul qiladi).
+NORASMIY_BANDLIK_TURLARI = [
+    "Bolalarga qarab turish va ularni parvarish qilish bo'yicha jismoniy shaxslarga ko'rsatiladigan xizmatlar",
+    "Oilaviy bolalar uyini tashkil etish va faoliyatini yuritish",
+    "Bemorlar hamda doimiy ravishda o'zgalar parvarishiga muhtoj keksa kishilarga qarab turish va ularni parvarish qilish",
+    "Uy xo'jaligini yuritish va uy ishlarini bajarish, shu jumladan, turar joylarni tozalash",
+    "Jismoniy shaxslarning santexnika uskunalarini mayda ta'mirlash va o'rnatish",
+    "Jismoniy shaxslarga kvartira ichida (shaxsiy qurilish ishlarida — uy ichida) elektr montaj xizmatlari ko'rsatish",
+    "Dehqon xo'jaliklari va fuqarolarning tomorqa yer uchastkalarida yer chopish va rekultivatsiya ishlari",
+    "Fermer xo'jaliklari egalari, pilla yetishtirish va ipak qurti urug'chiligi tashkilotlari buyurtmasi bo'yicha qishloq xo'jaligi ishlari",
+    "Fuqarolarning dalahovli va tomorqa uchastkalari landshaftini barpo etish ishlari",
+    "Qishloq xo'jaligi o'simliklarini ekish va parvarish qilishda, qishloq xo'jaligi ekinlari hosilini yig'ib olishda dehqon xo'jaliklari va tomorqa yer uchastkalari egalariga yordam berish",
+    "Chorva mollarini o'tlatish, ularni parvarish qilish, shu jumladan, urug'lantirish, qo'zilatish, qirqish va dag'al xashak jamg'arish ishlari",
+    "Jismoniy shaxslarga kompyuterlarni ta'mirlash va sozlash xizmatlarini ko'rsatish, litsenziyalangan dasturiy ta'minot o'rnatish ishlari",
+    "Buyurtmachining uyida bajariladigan maishiy texnikani o'rnatish va ta'mirlash",
+    "Jismoniy shaxslarning avtomobillarini yuvish, avtomobillar kuzovlarini silliqlash",
+    "Mexanizatsiya vositalarini qo'llamay, uyda bajariladigan yuk ortish-yuk tushirish ishlari",
+    "Xalq tabobati (litsenziyasi bo'lganda)",
+    "Xususiy shaxslarga bosh xizmatkor va kons'yerj xizmatlarini ko'rsatish",
+    "Buyurtma asosida tovarlarni yetkazib berish (yuk tashish bundan mustasno)",
+    "Bozorlar va savdo komplekslarida mayda yuklarni aravalarda tashish",
+    "Ilgari foydalanilgan tovarlarni sotib olish va sotish",
+    "Velosipedlarni ta'mirlash",
+    "Rassomlik",
+    "Aholining yakka tartibdagi buyurtmalari bo'yicha poyabzal tikish, poyabzalni ta'mirlash, bo'yash va tozalash",
+    "Kalitlar tayyorlash",
+    "O'lchov vositalari tayyorlash va ijaraga berish",
+    "Kesuvchi buyumlar va asboblarni charxlash",
+    "Musiqiy asboblarni ta'mirlash va sozlash",
+    "Milliy non va patirlarni tayyorlash va sotish",
+    "Tulumni shishirish xizmatlari (taksidermik ishlar)",
+    "Namoyishlarda kiyimlar modelini namoyish qilish, rasmli jurnallarda, reklama filmlari va videokliplarda suratga tushish",
+    "Multimedia, dizayn va san'at materiallarini yaratish va ishlov berish",
+    "Dasturiy ta'minot, axborot tizimlari, mobil ilovalar va veb-saytlarni ishlab chiqish va texnik qo'llab-quvvatlash",
+    "Elektron savdo maydonchasida tovarlarni (ishlarni, xizmatlarni) chakana sotish bo'yicha faoliyatni amalga oshirish",
+    "Ijtimoiy tarmoqlardagi faoliyat",
+    "Kadrlar tanlash sohasidagi faoliyat",
+    "Onlayn konsultatsiya berish (onlayn-konsultant, onlayn-trener, moliyaviy maslahatchi, vebinar olib boruvchi)",
+    "Nomoddiy madaniy meros obektlarini (dorboz, askiya va lapar) asrash va ulardan foydalanish",
+    "Uy sharoitida xonaki tovuqlarni yetishtirish va ko'paytirish",
+    "Hamshiralik ishi",
+    "Uy hayvonlari (qoramol, qo'y, echki, ot va boshqalar) bozorlarida vositachilik xizmati",
+    "Avtomobil bozorlarida vositachilik xizmati",
+    "Uyda sut va sut mahsulotlarini qayta ishlash va sotish xizmati",
+    "Gips va ganchdan buyumlar yasash (uy jihozlari, ertak qahramonlari haykallarini yasash)",
+    "Tosh va tosh maxsulotlaridan yodgorlik, suvenir va dekorativ buyumlar tayyorlash",
+    "Yog'och mahsulotlaridan savat, non mahsulotlari uchun maxsus idish va boshqa buyumlarni to'qish",
+    "Uy sharoitida pilla yetishtirish, shaxsiy tomorqa yer uchastkasida tut mevasi, niholi va ko'chatini yetishtirish",
+    "Kulolchilik",
+    "Kibersport faoliyati",
+    "\"O'zbekiston Respublikasi Sport vazirligining stipendiyasi\" tayinlangan sportchilar faoliyati",
+    "Teri xomashyosini yig'ish va tayyorlash",
+    "Junni yig'ish va tayyorlash",
+    "Qayta ishlangan jundan kiyim va boshqa mahsulotlarni tikish",
+    "Uyda loydan tandir yasash",
+    "Atlas va adras to'qish",
+    "Mayda munchoq (biser) tikish",
+    "Do'ppido'zlik mahsulotlarini uy sharoitida tayyorlash",
+    "Temirchilik mahsulotlarini uy sharoitida tayyorlash",
+    "Asalarichilik, shuningdek, asalari uyasi va ramkalarini yasash",
+    "Quroqchilik usulida ko'ylak, ko'rpa va yopinchiqlar tikish",
+    "Qo'ziqorinlarni terish, uy sharoitlarida yetishtirish va sotish",
+    "Pichoq tayyorlash, charxlash va sotish",
+    "Qog'ozdan qutilar, banderollar tayyorlash",
+    "Uy sharoitida issiqxona mahsulotlarini yetishtirish",
+    "Tayyor mahsulotga etiketka biriktirish",
+    "Uy sharoitida bolalar o'yinchog'i ishlab chiqarish",
+    "Uy sharoitida supurgi yetishtirish va tayyorlash",
+    "Yassi oyoqli bolalar oyoq kiyimlarini tayyorlash",
+    "Milliy taqinchoqlar yasash",
+    "Kandakorlik, miskarlik buyumlarini uy sharoitida tayyorlash",
+    "Dag'al jundan gilam, ko'rpa va yostiq tayyorlash",
+    "Artemiya tsistalarini yig'ish va topshirish",
+    "Yengil avtotransport vositasida yo'lovchilarni shahar, shahar atrofi va shaharlararo tashish (litsenziya varaqasi bo'lganda)",
+]
+
 
 def _parse_date(value):
     """Sanani turli formatda qabul qiladi (2026-07-16, 16.07.2026, ...).
@@ -86,6 +167,8 @@ def _validate_payload(payload):
         )
         if not has_reason:
             errors.append("Kamida bitta rad etish sababini tanlang!")
+        if rad.get("norasmiyRad") and not rad.get("norasmiyTuri"):
+            errors.append("Norasmiy bandlik turini kiriting!")
 
     if template == "tasdiqlandi":
         tasdiq = payload.get("tasdiqMalumotlari") or {}
@@ -120,6 +203,8 @@ def _normalize_rad_sabablari(rad):
         return rad
     if rad.get("tizimSababi"):
         rad["tizimSababi"] = tozalangan_matn(rad.get("tizimSababi"))
+    if rad.get("norasmiyTuri"):
+        rad["norasmiyTuri"] = tozalangan_matn(rad.get("norasmiyTuri"))
     for item in rad.get("uyRad") or []:
         item["uyManzil"] = _clean_name(item.get("uyManzil"))
         item["uyKadastr"] = raqamli_matn(item.get("uyKadastr"))
@@ -171,6 +256,7 @@ def _form_context(request):
     return {
         "template_choices": TEMPLATE_CHOICES,
         "xat_from": XAT_FROM,
+        "norasmiy_bandlik_turlari": NORASMIY_BANDLIK_TURLARI,
     }
 
 

@@ -186,6 +186,7 @@ def render_letter(data):
     oddiy["{uy_soni}"] = str(len(rad.get("uyRad") or []))
     oddiy["{rasmiy_matni}"] = dg.income_text(rad.get("rasmiyRad") or [])
     oddiy["{tizim_sababi_matni}"] = rad.get("tizimSababi") or ""
+    oddiy["{norasmiy_turi}"] = rad.get("norasmiyTuri") or ""
     replace_in_doc(doc, oddiy)
 
     buffer = io.BytesIO()

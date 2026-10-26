@@ -85,8 +85,10 @@ def rad_paragraphs(data):
     if rad.get("norasmiyRad"):
         paras.append(_p([
             ("O'rganish natijasida ", {}), ("“mahalla yettiligi”", {"bold": True}),
-            (" tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
-             "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
+            (" tomonidan o'tkazilgan so'rovnoma xulosasida ", {}),
+            (rad.get("norasmiyTuri") or "", {"bold": True}),
+            (" bilan shug'ullanib norasmiy daromad manbaiyga ega "
+             "ekanligingiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
              "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli", {}),
         ] + dg.rad_xulosa_segments(data) + [
             dg.asos_segment("(Asos: VM 35-son qarori 4-bob a-band.)"),

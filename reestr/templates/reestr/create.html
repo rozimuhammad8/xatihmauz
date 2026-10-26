@@ -260,6 +260,15 @@
 
     <div class="reason">
       <label class="reason-head"><input type="checkbox" id="norasmiyRad" name="norasmiyRad">Norasmiy daromad mavjud</label>
+      <div class="reason-content" id="norasmiyRadContent">
+        <div class="field">
+          <label>Norasmiy bandlik turi</label>
+          <input type="text" id="norasmiyTuri" name="norasmiyTuri" list="norasmiyTurlariList" autocomplete="off" placeholder="Ro'yxatdan tanlang yoki o'zingiz yozing">
+          <datalist id="norasmiyTurlariList">
+            {% for tur in norasmiy_bandlik_turlari %}<option value="{{ tur }}">{% endfor %}
+          </datalist>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -747,6 +756,9 @@
     document.getElementById('rasmiyRadContent').classList.toggle('show', this.checked);
     if (this.checked && rasmiyRadCount === 0) addRasmiyRad();
   });
+  document.getElementById('norasmiyRad').addEventListener('change', function(){
+    document.getElementById('norasmiyRadContent').classList.toggle('show', this.checked);
+  });
 
   /* ---------------- MA'LUMOT YIG'ISH ---------------- */
   function collectData(){
@@ -771,6 +783,7 @@
         tizimSababi: getVal('radTizimSababiMatni'),
         uydaEmasRad: getCheck('uydaEmasRad'),
         norasmiyRad: getCheck('norasmiyRad'),
+        norasmiyTuri: getVal('norasmiyTuri'),
         uyRad: Array.from(document.querySelectorAll('#uyRadContainer .dynamic-item')).map(item => ({
           uyManzil: krilToLotin(item.querySelector('.uyRad-manzil').value.trim()),
           uyKadastr: item.querySelector('.uyRad-kadastr').value.trim(),
@@ -824,6 +837,7 @@
       if (getCheck('uyRadToggle') && rad.uyRad.length===0) errors.push('"Ko\'chmas mulk" tanlangan, lekin hech qanday mulk qo\'shilmagan!');
       if (getCheck('avtoRadToggle') && rad.avtoRad.length===0) errors.push('"Avtomobil" tanlangan, lekin hech qanday avtomobil qo\'shilmagan!');
       if (getCheck('rasmiyRadToggle') && rad.rasmiyRad.length===0) errors.push('"Rasmiy daromad" tanlangan, lekin hech qanday daromad qo\'shilmagan!');
+      if (rad.norasmiyRad && !rad.norasmiyTuri) errors.push('"Norasmiy daromad" tanlangan, lekin bandlik turi kiritilmagan!');
     }
     if (data.template === 'toxtatilgan'){
       if (!data.radSabablari.tizimSababi) errors.push("Sabab matnini kiriting!");
@@ -899,7 +913,11 @@
         document.getElementById('radTizimSababiMatni').value = rad.tizimSababi;
       }
       document.getElementById('uydaEmasRad').checked = !!rad.uydaEmasRad;
-      document.getElementById('norasmiyRad').checked = !!rad.norasmiyRad;
+      if (rad.norasmiyRad){
+        document.getElementById('norasmiyRad').checked = true;
+        document.getElementById('norasmiyRadContent').classList.add('show');
+        document.getElementById('norasmiyTuri').value = rad.norasmiyTuri || '';
+      }
       if (rad.uyRad && rad.uyRad.length){
         document.getElementById('uyRadToggle').checked = true;
         document.getElementById('uyRadContent').classList.add('show');

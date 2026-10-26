@@ -45,6 +45,7 @@ P_TOLOV_SUMMASI = "{tolov_summasi}"
 P_TAYINLASH_QOSHIMCHA = "{tayinlash_qoshimcha}"
 P_QOSHIMCHA_MALUMOT = "{qoshimcha_malumot}"
 P_TIZIM_SABABI_MATNI = "{tizim_sababi_matni}"
+P_NORASMIY_TURI = "{norasmiy_turi}"
 
 # Dinamik ro'yxatlar — ichida qalin qismlar bo'ladi, shuning uchun oddiy matn
 # bilan emas, formatlangan segmentlar bilan almashtiriladi.
@@ -145,9 +146,11 @@ def qur_rad(doc):
         (SHART_NORASMIY, {}),
         ("O'rganish natijasida ", {}),
         ("“mahalla yettiligi”", {'bold': True}),
+        (" tomonidan o'tkazilgan so'rovnoma xulosasida ", {}),
+        (P_NORASMIY_TURI, {'bold': True}),
         (
-            " tomonidan o'tkazilgan so'rovnoma xulosasida norasmiy daromad manbaiyga ega "
-            "ekanligngiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
+            " bilan shug'ullanib norasmiy daromad manbaiyga ega "
+            "ekanligingiz “Ijtimoiy himoya yagona reyestri” axborot tizimiga kiritilganda "
             "minimal iste'mol xarajatlaridan yuqori daromadingiz mavjudligi sababli",
             {},
         ),
