@@ -333,7 +333,7 @@ function fillLetterForm(payload) {
   }
   const filled = {
     arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false,
-    tizimSababi: false, radTizimSababi: false,
+    tizimSababi: false, radTizimSababi: false, avtoRad: 0, uyRad: 0,
     tasdiqSanasi: false, tolovSanasi: false, tolovSum: false, kartaRaqami: false,
   };
 
@@ -350,12 +350,9 @@ function fillLetterForm(payload) {
     }
   }
 
-  // "Rad etish" — avtomobil/ko'chmas mulk/rasmiy daromad kabi batafsil
-  // ma'lumotlar (yili, davlat raqami, kadastr raqami va h.k.) sr.ihma.uz
-  // API'sida tuzilgan shaklda yo'q, shuning uchun bular doim xodim
-  // tomonidan qo'lda kiritiladi (qarang: runRadFill). Faqat tizim o'zi
-  // hisoblab bergan xulosa matni (mavjud bo'lsa) avtomatik qo'yiladi va
-  // "Tizim tomonidan aniqlangan sabab" katakchasi avtomatik belgilanadi.
+  // "Rad etish" — tizim o'zi hisoblab bergan xulosa matni (mavjud bo'lsa)
+  // avtomatik qo'yiladi va "Tizim tomonidan aniqlangan sabab" katakchasi
+  // avtomatik belgilanadi (qarang: runRadFill).
   if (payload.radTizimSababi !== undefined) {
     if (payload.radTizimSababi) {
       const toggle = document.getElementById("tizimSababiToggle");
@@ -365,6 +362,29 @@ function fillLetterForm(payload) {
       }
     }
     filled.radTizimSababi = setVal("radTizimSababiMatni", payload.radTizimSababi);
+  }
+
+  // Avtomobil va ko'chmas mulk — sr.ihma.uz API'si (Eligibility/GetBySummary
+  // -> members[].vehicles[]/properties[]) bularni TO'LIQ strukturaviy
+  // ko'rinishda beradi (yil/rusum/davlat raqami, manzil/kadastr raqami),
+  // shuning uchun avval o'ylanganidek qo'lda emas, to'g'ridan-to'g'ri
+  // avtomatik to'ldiriladi. create.html'dagi butun skript IIFE ichiga
+  // o'ralgan bo'lgani uchun addAvtoRad()/addUyRad() haqiqiy global EMAS —
+  // shuning uchun create.html ularni ataylab window.__ihmaFillAvtoRad /
+  // window.__ihmaFillUyRad orqali tashqariga chiqarib qo'ygan, shular
+  // ishlatiladi (shunda dinamik guruh UI'si ham, xodim qo'lda
+  // qo'shganidek, to'g'ri shaklda chiqadi).
+  if (Array.isArray(payload.avtoRad) && payload.avtoRad.length) {
+    if (typeof window.__ihmaFillAvtoRad === "function") {
+      window.__ihmaFillAvtoRad(payload.avtoRad);
+      filled.avtoRad = payload.avtoRad.length;
+    }
+  }
+  if (Array.isArray(payload.uyRad) && payload.uyRad.length) {
+    if (typeof window.__ihmaFillUyRad === "function") {
+      window.__ihmaFillUyRad(payload.uyRad);
+      filled.uyRad = payload.uyRad.length;
+    }
   }
 
   // "To'lov to'xtatilgan" — bitta tayyor sabab matni (tizim o'zi hisoblab
@@ -491,25 +511,70 @@ async function fetchCurrentSummary(id, token) {
   );
 }
 
-// "Rad etish" — avtomobil (yili/rusumi/davlat raqami), ko'chmas mulk
-// (manzil/kadastr) va rasmiy daromad (egasi/tashkilot/miqdor) kabi
-// batafsil ma'lumotlar sr.ihma.uz API'sida tuzilgan shaklda berilmaydi
-// (faqat qaysi mezon o'tmagani — household.checks[].passed — ma'lum,
-// raqamlar emas), shuning uchun bular har doim xodim tomonidan Django
-// formasida qo'lda kiritiladi. Avtomatik faqat tizim o'zi hisoblab
-// bergan umumiy xulosa matni (mavjud bo'lsa) qo'yiladi.
+// summary.members[].vehicles[]/properties[] — sr.ihma.uz bularni TO'LIQ
+// strukturaviy ko'rinishda beradi (yil/rusum/davlat raqami, manzil/kadastr
+// raqami), shuning uchun avval o'ylanganidek qo'lda emas, to'g'ridan-to'g'ri
+// olib, Django formasidagi avtoRad/uyRad dinamik guruhlariga aylantiriladi.
+// Mulk "isResidential: false" bo'lsa — bu Nizomning 33-band "b" qismidagi
+// ALOHIDA asos ("daromad olib keluvchi ... noturar joylar"), oddiy
+// ko'chmas mulkdan farqli — shuning uchun manzilga "(noturar joy)" deb
+// aniq belgilab qo'yiladi (joriy forma tuzilishida alohida maydon yo'q,
+// lekin matnda farq yo'qolib ketmasligi kerak).
+function extractAvtoUy(summary) {
+  const avtoRad = [];
+  const uyRad = [];
+  const seenAvto = new Set();
+  const seenUy = new Set();
+  const members = (summary && summary.members) || [];
+  members.forEach((m) => {
+    (m.vehicles || []).forEach((v) => {
+      if (seenAvto.has(v.id)) return;
+      seenAvto.add(v.id);
+      avtoRad.push({
+        avtoYil: v.yearOfManufacture != null ? String(v.yearOfManufacture) : "",
+        avtoModel: v.model || "",
+        avtoRaqam: v.regNo || "",
+      });
+    });
+    (m.properties || []).forEach((p) => {
+      if (seenUy.has(p.id)) return;
+      seenUy.add(p.id);
+      const manzil = p.isResidential === false
+        ? `${p.addressText || ""} (noturar joy${p.propertyTypeName ? ", " + p.propertyTypeName : ""})`
+        : (p.addressText || "");
+      uyRad.push({ uyManzil: manzil, uyKadastr: p.cadastreNo || "" });
+    });
+  });
+  return { avtoRad, uyRad };
+}
+
+// "Rad etish" — tizim o'zi hisoblab bergan umumiy xulosa matni avtomatik
+// qo'yiladi, avtomobil/ko'chmas mulk esa sr.ihma.uz'dagi haqiqiy
+// (members[].vehicles[]/properties[]) ma'lumotlar asosida to'liq
+// avtomatik to'ldiriladi (qarang: extractAvtoUy). Rasmiy/norasmiy
+// daromad ("rasmiyRad"/"norasmiyRad") — tizim API'sida bu ikkisi uchun
+// alohida tuzilgan ma'lumot (egasi/tashkilot/miqdor, yoki norasmiy
+// bandlik turi) topilmadi — Nizomning 15-bandiga ko'ra bular ijtimoiy
+// xodimning o'z so'rovnomasida (savolnoma) qayd etiladi, standart
+// baholash API orqali ochiq emas — shuning uchun bular hamon qo'lda
+// kiritiladi.
 async function runRadFill(id, letterTabId, registration, statusCode, token) {
   const payload = {
     ...commonLetterPayload(registration),
     isQayta: statusCode === "RECHECK_REJECTED",
     radTizimSababi: "",
+    avtoRad: [],
+    uyRad: [],
   };
 
   try {
     const summary = await fetchCurrentSummary(id, token);
     payload.radTizimSababi = (summary && summary.assessment && summary.assessment.rejectReasonText) || "";
+    const { avtoRad, uyRad } = extractAvtoUy(summary);
+    payload.avtoRad = avtoRad;
+    payload.uyRad = uyRad;
   } catch (err) {
-    // Sabab matnini olib bo'lmasa ham, umumiy maydonlar baribir to'ldiriladi
+    // Ma'lumotlarni olib bo'lmasa ham, umumiy maydonlar baribir to'ldiriladi
     // — xodim sabab bo'limini to'liq qo'lda to'ldiradi.
   }
 

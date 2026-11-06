@@ -238,7 +238,7 @@
       <label class="reason-head"><input type="checkbox" id="uyRadToggle" name="uyRadToggle">Ko'chmas mulk mavjud</label>
       <div class="reason-content" id="uyRadContent">
         <div id="uyRadContainer"></div>
-        <button type="button" class="add-btn" id="addUyRad">+ Ko'chmas mulk qo'shish</button>
+        <button type="button" class="add-btn" id="addUyRadBtn">+ Ko'chmas mulk qo'shish</button>
       </div>
     </div>
 
@@ -246,7 +246,7 @@
       <label class="reason-head"><input type="checkbox" id="avtoRadToggle" name="avtoRadToggle">Avtomobil mavjud</label>
       <div class="reason-content" id="avtoRadContent">
         <div id="avtoRadContainer"></div>
-        <button type="button" class="add-btn" id="addAvtoRad">+ Avtomobil qo'shish</button>
+        <button type="button" class="add-btn" id="addAvtoRadBtn">+ Avtomobil qo'shish</button>
       </div>
     </div>
 
@@ -254,7 +254,7 @@
       <label class="reason-head"><input type="checkbox" id="rasmiyRadToggle" name="rasmiyRadToggle">Rasmiy daromad mavjud</label>
       <div class="reason-content" id="rasmiyRadContent">
         <div id="rasmiyRadContainer"></div>
-        <button type="button" class="add-btn" id="addRasmiyRad">+ Daromad qo'shish</button>
+        <button type="button" class="add-btn" id="addRasmiyRadBtn">+ Daromad qo'shish</button>
       </div>
     </div>
 
@@ -737,9 +737,26 @@
     if (type === 'uyRad') uyRadCount--; else if (type === 'avtoRad') avtoRadCount--; else if (type === 'rasmiyRad') rasmiyRadCount--;
     renumberItems(type);
   });
-  document.getElementById('addUyRad').addEventListener('click', () => addUyRad());
-  document.getElementById('addAvtoRad').addEventListener('click', () => addAvtoRad());
-  document.getElementById('addRasmiyRad').addEventListener('click', () => addRasmiyRad());
+  document.getElementById('addUyRadBtn').addEventListener('click', () => addUyRad());
+  document.getElementById('addAvtoRadBtn').addEventListener('click', () => addAvtoRad());
+  document.getElementById('addRasmiyRadBtn').addEventListener('click', () => addRasmiyRad());
+
+  // Bu butun skript IIFE ichiga o'ralgan (yuqoridagi "(function(){"),
+  // shuning uchun addAvtoRad/addUyRad haqiqiy global emas — kengaytma
+  // (extension/background.js, MAIN world'ga in'ektsiya qilingan kod)
+  // ularni oddiy global funksiya sifatida chaqira olmaydi. Avtomobil/
+  // ko'chmas mulkni sr.ihma.uz'dan avtomatik to'ldirish uchun ataylab
+  // shu ikkita funksiya window'ga chiqarib qo'yiladi.
+  window.__ihmaFillAvtoRad = function(items){
+    document.getElementById('avtoRadToggle').checked = true;
+    document.getElementById('avtoRadContent').classList.add('show');
+    (items || []).forEach(it => addAvtoRad(it));
+  };
+  window.__ihmaFillUyRad = function(items){
+    document.getElementById('uyRadToggle').checked = true;
+    document.getElementById('uyRadContent').classList.add('show');
+    (items || []).forEach(it => addUyRad(it));
+  };
 
   document.getElementById('tizimSababiToggle').addEventListener('change', function(){
     document.getElementById('tizimSababiContent').classList.toggle('show', this.checked);
