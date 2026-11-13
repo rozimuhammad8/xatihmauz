@@ -272,6 +272,16 @@ def qur_tayinlandi(doc):
     add_signature_block(doc, _imzo_placeholderlari())
 
 
+def qur_martalik_yordam(doc):
+    _sarlavha(doc)
+    for tur, matn in dg.MARTALIK_YORDAM_PARAGRAFLARI:
+        if tur == "bullet":
+            dg.add_bullet_paragraph(doc, [(matn, {})])
+        else:
+            body_paragraph(doc, [(matn, {})])
+    add_signature_block(doc, _imzo_placeholderlari())
+
+
 def qur_muddat(doc):
     _sarlavha(doc)
 
@@ -347,6 +357,7 @@ SHABLONLAR = {
     "tasdiqlandi": ("tasdiqlandi.docx", qur_tasdiqlandi),
     "tayinlandi": ("tayinlandi.docx", qur_tayinlandi),
     "muddat": ("muddat.docx", qur_muddat),
+    "martalikYordam": ("martalik_yordam.docx", qur_martalik_yordam),
     "arizaKiritilgan": ("ariza_kiritilgan.docx", qur_ariza_kiritilgan),
     "arizaKiritilmagan": ("ariza_kiritilmagan.docx", qur_ariza_kiritilmagan),
 }

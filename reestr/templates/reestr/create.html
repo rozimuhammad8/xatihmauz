@@ -307,6 +307,12 @@
     <p class="note" style="margin-top:12px">Bu shablon uchun qo'shimcha ma'lumotlar kerak emas. Faqat asosiy ma'lumotlar va Murojaat raqami yetarli.</p>
   </div>
 
+  <!-- BIR MARTALIK MODDIY YORDAM -->
+  <div class="card conditional-fields" id="martalikYordamFields">
+    <h3>Bir martalik moddiy yordam</h3>
+    <p class="note">Xat matni tayyor (PF-236-son Farmoni va VM 601-son qarori, 1 000 000 so'm). Faqat yuqoridagi asosiy ma'lumotlar va Murojaat raqami kerak — ariza ma'lumotlari talab qilinmaydi.</p>
+  </div>
+
   <!-- ARIZA KIRITILGAN -->
   <div class="card conditional-fields" id="arizaKiritilganFields">
     <h3>Ariza kiritilgan</h3>
@@ -612,10 +618,10 @@
   });
 
   /* ---------------- TEMPLATE SELECTOR ---------------- */
-  const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat', 'arizaKiritilmagan'];
+  const TEMPLATES_WITHOUT_ARIZA_INFO = ['muddat', 'martalikYordam', 'arizaKiritilmagan'];
   const fieldMap = {
     rad: 'radFields', toxtatilgan: 'toxtatilganFields', tasdiqlandi: 'tasdiqlandiFields', tayinlandi: 'tayinlandiFields',
-    muddat: 'muddatFields', arizaKiritilgan: 'arizaKiritilganFields',
+    muddat: 'muddatFields', martalikYordam: 'martalikYordamFields', arizaKiritilgan: 'arizaKiritilganFields',
     arizaKiritilmagan: 'arizaKiritilmaganFields',
   };
   let currentTemplate = 'rad';

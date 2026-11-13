@@ -275,6 +275,25 @@ def income_text(items):
     )
 
 
+# "Bir martalik moddiy yordam" xati matni (PF-236 / VM 601-son). Yagona manba:
+# martalik_yordam.docx shabloni ham, brauzerdagi ko'rinish ham (letter_text.py)
+# shu ro'yxatdan quriladi. (tur, matn): tur — "body" (oddiy abzats) yoki
+# "bullet" (ro'yxat bandi).
+MARTALIK_YORDAM_PARAGRAFLARI = [
+    ('body', 'Sizning bir martalik moddiy yordam ajratish yuzasidan yo‘llagan murojaatingiz belgilangan tartibda ko‘rib chiqildi.'),
+    ('body', 'O‘zbekiston Respublikasi Prezidentining 2026-yil 28-oktabrdagi PF-236-son Farmoni hamda Vazirlar Mahkamasining 2026-yil 31-oktabrdagi 601-son qaroriga muvofiq, 2026/2027-yilgi isitish mavsumida aholining ehtiyojmand qatlamlarini qo‘shimcha qo‘llab-quvvatlash maqsadida 1 000 000 (bir million) so‘m miqdorida bir martalik moddiy yordam ajratilishi belgilangan.'),
+    ('body', 'Mazkur normativ-huquqiy hujjatlarga asosan, bir martalik moddiy yordam quyidagi toifadagi fuqarolar va oilalarga ajratiladi:'),
+    ('bullet', 'Ijtimoiy reyestrga kiritilgan oilalarga;'),
+    ('bullet', '«Mahalla yettiligi» xulosasi asosida Ijtimoiy reyestrga kiritilmagan, biroq ijtimoiy-iqtisodiy holati bo‘yicha reyestrga kiritish mezonlariga mos keladigan ehtiyojmand oilalarga;'),
+    ('bullet', 'O‘zgalar parvarishiga muhtoj bo‘lgan yolg‘iz yashovchi hamda yolg‘iz keksalar va nogironligi bo‘lgan shaxslar reyestriga kiritilgan fuqarolarga;'),
+    ('bullet', 'Yetim va ota-ona qaramog‘idan mahrum bo‘lgan bolalar yashayotgan oilalarga.'),
+    ('body', "Murojaatingizni o‘rganish natijasida, oilangiz bir martalik moddiy yordam olish mezonlariga muvofiq deb topilib, Sizga 1 000 000 (bir million) so‘m miqdorida bir martalik moddiy yordam tayinlanganligini ma'lum qilamiz."),
+    ('body', 'Shuningdek, Vazirlar Mahkamasining 2026-yil 31-oktabrdagi 601-son qaroriga 1-ilova bilan tasdiqlangan sxemaga muvofiq, bir martalik moddiy yordam oluvchilar bo‘yicha to‘lov ro‘yxatlari shakllantirilib, zarur mablag‘lar 2026-yil 20-noyabrda 30-noyabrga qadar to‘lab berilishi belgilangan.'),
+    ('body', "Shu munosabat bilan, Sizga tayinlangan bir martalik moddiy yordam mablag‘lari belgilangan muddatlarda ijtimoiy yoki bank kartangizga o‘tkazib berilishini ma'lum qilamiz."),
+    ('body', "Agarda murojaatingizni ko‘rib chiqish natijasidan norozi bo‘lsangiz, O‘zbekiston Respublikasining «Jismoniy va yuridik shaxslarning murojaatlari to‘g‘risida»gi Qonunida belgilangan tartibda yuqori turuvchi organga yoki sudga shikoyat bilan murojaat qilish huquqiga ega ekanligingizni ma'lum qilamiz."),
+]
+
+
 def rad_xulosa_segments(data):
     """Har bir rad sababining oxiriga qo'shiladigan umumiy xulosa.
 
@@ -352,6 +371,17 @@ def body_paragraph(doc, segments):
         doc, segments,
         align=WD_ALIGN_PARAGRAPH.JUSTIFY,
         first_line_indent=BODY_FIRST_LINE_INDENT,
+        space_after=2,
+    )
+
+
+def add_bullet_paragraph(doc, segments):
+    """Ro'yxat bandi: "•" belgisi, osilgan (hanging) chekinish bilan."""
+    return add_paragraph(
+        doc, [("•	", {})] + list(segments),
+        align=WD_ALIGN_PARAGRAPH.JUSTIFY,
+        left_indent=Emu(457200),
+        first_line_indent=Emu(-228600),
         space_after=2,
     )
 

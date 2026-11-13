@@ -11,6 +11,7 @@ fayllarni Wordda tahrirlash kifoya — Python kodiga tegish shart emas.**
 | `tasdiqlandi.docx` | Tasdiqlash |
 | `tayinlandi.docx` | Tayinlash |
 | `muddat.docx` | Muddat so'rash |
+| `martalik_yordam.docx` | Bir martalik moddiy yordam |
 | `ariza_kiritilgan.docx` | Ariza kiritilgan |
 
 ## 1. Oddiy belgilar

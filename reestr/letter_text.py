@@ -246,12 +246,20 @@ def ariza_kiritilmagan_paragraphs(data):
     return paras
 
 
+def martalik_yordam_paragraphs(data):
+    return [
+        ("• " if tur == "bullet" else "") + _p([(matn, {})])
+        for tur, matn in dg.MARTALIK_YORDAM_PARAGRAFLARI
+    ]
+
+
 PARAGRAPH_BUILDERS = {
     "rad": rad_paragraphs,
     "toxtatilgan": toxtatilgan_paragraphs,
     "tasdiqlandi": tasdiqlandi_paragraphs,
     "tayinlandi": tayinlandi_paragraphs,
     "muddat": muddat_paragraphs,
+    "martalikYordam": martalik_yordam_paragraphs,
     "arizaKiritilgan": ariza_kiritilgan_paragraphs,
     "arizaKiritilmagan": ariza_kiritilmagan_paragraphs,
 }
@@ -261,7 +269,7 @@ PARAGRAPH_BUILDERS = {
 # har doim to'ldiriladi, shuning uchun preview ham hech qaysi shablonda
 # uni yashirmasligi kerak).
 TEMPLATES_WITH_SIGNATURE = {
-    "rad", "toxtatilgan", "tasdiqlandi", "tayinlandi", "muddat", "arizaKiritilmagan", "arizaKiritilgan",
+    "rad", "toxtatilgan", "tasdiqlandi", "tayinlandi", "muddat", "martalikYordam", "arizaKiritilmagan", "arizaKiritilgan",
 }
 
 

@@ -1133,3 +1133,58 @@ class ArizaKiritilmaganTest(TestCase):
             toza = (_re.sub(r"<[^>]+>", "", html)
                     .replace("&#x27;", "'").replace("&quot;", '"').replace("&amp;", "&"))
             self.assertIn(toza.strip(), matn, f"preview'da bor, .docx'da yo'q: {toza[:80]}")
+
+
+class MartalikYordamTest(TestCase):
+    """"Bir martalik moddiy yordam" xati (PF-236 / VM 601-son): ariza
+    ma'lumotlari talab qilinmaydi, matn tayyor (yagona manba —
+    docx_generator.MARTALIK_YORDAM_PARAGRAFLARI), imzo bloki bor."""
+
+    def setUp(self):
+        tashkilot = Tashkilot.objects.create(nomi=TASHKILOT_NOMI, rahbar="S.Mutalibov")
+        self.user = User.objects.create_user(
+            "r", password="p", first_name="Diyor", last_name="Atamirzayev"
+        )
+        self.user.profil.rol = XodimProfil.ROL_REESTR
+        self.user.profil.tuman = "Andijon tuman"
+        self.user.profil.tashkilot = tashkilot
+        self.user.profil.save()
+        self.client_ = Client()
+        self.client_.login(username="r", password="p")
+        self.payload = {
+            "template": "martalikYordam", "fio": "test fuqaro", "mfyNomi": "katta guzar",
+            "street": "anisiy", "murojaatfrom": "Ishonch telefoni",
+            "murojaatRaqami": "1/26", "murojaatVaqti": "2026-11-10",
+        }
+
+    def _saqlash(self):
+        return self.client_.post(
+            reverse("reestr:create"), json.dumps(self.payload), content_type="application/json"
+        )
+
+    def test_arizasiz_saqlanadi_va_docx_matni_togri(self):
+        self.assertEqual(self._saqlash().status_code, 200)
+        xat = Xat.objects.latest("id")
+        self.assertEqual(xat.template, "martalikYordam")
+        javob = self.client_.get(reverse("reestr:export", args=[xat.pk]))
+        self.assertEqual(javob.status_code, 200)
+        matn = docx_matni(javob.content)
+        self.assertNotIn("{", matn)
+        self.assertIn("PF-236-son Farmoni", matn)
+        self.assertIn("601-son qaroriga", matn)
+        self.assertIn("1 000 000 (bir million)", matn)
+        self.assertIn("Test Fuqaroga", matn)
+        self.assertIn("S.Mutalibov", matn)
+        # Har bir manba abzatsi shablonda bor
+        from reestr.docx_generator import MARTALIK_YORDAM_PARAGRAFLARI
+        for _tur, abzats in MARTALIK_YORDAM_PARAGRAFLARI:
+            self.assertIn(abzats, matn)
+
+    def test_korinish_docx_bilan_bir_xil_matn(self):
+        from reestr.docx_generator import MARTALIK_YORDAM_PARAGRAFLARI
+        from reestr.letter_text import build_preview
+        self._saqlash()
+        _p, _m, abzatslar, imzo = build_preview(Xat.objects.latest("id").to_letter_dict())
+        self.assertTrue(imzo)
+        self.assertEqual(len(abzatslar), len(MARTALIK_YORDAM_PARAGRAFLARI))
+        self.assertTrue(abzatslar[3].startswith("• "))
