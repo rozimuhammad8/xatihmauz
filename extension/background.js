@@ -333,7 +333,7 @@ function fillLetterForm(payload) {
   }
   const filled = {
     arizaID: false, arizaMaqsadi: false, arizaVaqti: false, isQayta: false,
-    tizimSababi: false, radTizimSababi: false, avtoRad: 0, uyRad: 0,
+    tizimSababi: false, radTizimSababi: false, avtoRad: 0, uyRad: 0, rasmiyRad: 0, uydaEmasRad: false,
     tasdiqSanasi: false, tolovSanasi: false, tolovSum: false, kartaRaqami: false,
   };
 
@@ -384,6 +384,19 @@ function fillLetterForm(payload) {
     if (typeof window.__ihmaFillUyRad === "function") {
       window.__ihmaFillUyRad(payload.uyRad);
       filled.uyRad = payload.uyRad.length;
+    }
+  }
+  if (Array.isArray(payload.rasmiyRad) && payload.rasmiyRad.length) {
+    if (typeof window.__ihmaFillRasmiyRad === "function") {
+      window.__ihmaFillRasmiyRad(payload.rasmiyRad);
+      filled.rasmiyRad = payload.rasmiyRad.length;
+    }
+  }
+  if (payload.uydaEmasRad) {
+    const cb = document.getElementById("uydaEmasRad");
+    if (cb) {
+      cb.checked = true;
+      filled.uydaEmasRad = true;
     }
   }
 
@@ -548,6 +561,54 @@ function extractAvtoUy(summary) {
   return { avtoRad, uyRad };
 }
 
+// "2026-07-01".."2026-09-30" -> "Iyul-Sentyabr, 2026" (bir oy bo'lsa "Iyul, 2026").
+function davrMatni(incomeWindow) {
+  const m1 = String((incomeWindow && incomeWindow.start) || "").match(/^(\d{4})-(\d{2})/);
+  const m2 = String((incomeWindow && incomeWindow.end) || "").match(/^(\d{4})-(\d{2})/);
+  if (!m1 || !m2) return "";
+  // Xat matnidagi imlo (docx_generator.MONTHS): "sentyabr", "oktyabr".
+  const OYLAR = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul",
+    "Avgust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
+  const a = OYLAR[Number(m1[2]) - 1];
+  const b = OYLAR[Number(m2[2]) - 1];
+  if (!a || !b) return "";
+  return a === b && m1[1] === m2[1] ? `${a}, ${m1[1]}` : `${a}-${b}, ${m2[1]}`;
+}
+
+// Har bir oila a'zosining 0 dan katta daromad manbalari (income.items[]) —
+// rasmiy ish haqi, pensiya, yakka tartibdagi tadbirkor daromadi, shartli
+// hisoblangan (normativ) daromadlar va h.k. Tizimdagi summa BARCHA davr
+// (incomeWindow, odatda 3 oy) bo'yicha jami; Nizomning 18-bandiga ko'ra
+// hisob o'rtacha OYLIK bo'yicha yuritilgani uchun summa oylar soniga
+// bo'linadi (tekshirildi: jami/oila a'zolari/3 = perCapitaIncome).
+// Tizim daromad manbaining tashkilot nomini bermaydi (faqat tur va summa),
+// shuning uchun "tashkilot" bo'sh qoldiriladi va "turi" ishlatiladi.
+function extractRasmiyDaromad(summary) {
+  const out = [];
+  const months = (summary && summary.assessment && summary.assessment.incomeWindow
+    && summary.assessment.incomeWindow.months) || 3;
+  const davri = davrMatni(summary && summary.assessment && summary.assessment.incomeWindow);
+  ((summary && summary.members) || []).forEach((m) => {
+    ((m.income && m.income.items) || []).forEach((it) => {
+      const amount = Number(it.amount) || 0;
+      if (amount <= 0) return;
+      out.push({
+        egasi: m.fullName || "",
+        miqdori: String(Math.round(amount / months)),
+        tashkilot: "",
+        davri,
+        turi: it.code === "OFFICIAL_INCOME" ? "" : (it.name || ""),
+      });
+    });
+  });
+  return out;
+}
+
+function failedCheckCodes(summary) {
+  const checks = (summary && summary.household && summary.household.checks) || [];
+  return new Set(checks.filter((c) => c.passed === false).map((c) => c.code));
+}
+
 // "Rad etish" — tizim o'zi hisoblab bergan umumiy xulosa matni avtomatik
 // qo'yiladi, avtomobil/ko'chmas mulk esa sr.ihma.uz'dagi haqiqiy
 // (members[].vehicles[]/properties[]) ma'lumotlar asosida to'liq
@@ -565,14 +626,24 @@ async function runRadFill(id, letterTabId, registration, statusCode, token) {
     radTizimSababi: "",
     avtoRad: [],
     uyRad: [],
+    rasmiyRad: [],
+    uydaEmasRad: false,
   };
 
   try {
     const summary = await fetchCurrentSummary(id, token);
     payload.radTizimSababi = (summary && summary.assessment && summary.assessment.rejectReasonText) || "";
+    // Faqat HAQIQATAN o'tmagan mezonlarga tegishli bo'limlar to'ldiriladi:
+    // masalan daromad bo'yicha rad etilgan oilada bitta (ruxsat etilgan)
+    // avtomobil bo'lsa, u "avtomobil sababli rad" deb xatga tushmasligi kerak.
+    const failed = failedCheckCodes(summary);
     const { avtoRad, uyRad } = extractAvtoUy(summary);
-    payload.avtoRad = avtoRad;
-    payload.uyRad = uyRad;
+    if (failed.has("HH_NEW_VEHICLES_CHECK") || failed.has("HH_VEHICLES_CHECK")) payload.avtoRad = avtoRad;
+    if (failed.has("HH_PROPERTIES_CHECK")) payload.uyRad = uyRad;
+    if (failed.has("HH_INCOME_CHECK")) payload.rasmiyRad = extractRasmiyDaromad(summary);
+    // "O'rganish imkoniyati mavjud emas" (ijtimoiy xodim borganda oila
+    // yashash joyida bo'lmagan — Nizom 13-band) = "Uyda bo'lmagan".
+    if (failed.has("HH_OPPORTUNITY_CHECK")) payload.uydaEmasRad = true;
   } catch (err) {
     // Ma'lumotlarni olib bo'lmasa ham, umumiy maydonlar baribir to'ldiriladi
     // — xodim sabab bo'limini to'liq qo'lda to'ldiradi.

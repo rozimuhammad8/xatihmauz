@@ -215,6 +215,7 @@ def _normalize_rad_sabablari(rad):
     for item in rad.get("rasmiyRad") or []:
         item["egasi"] = _clean_name(item.get("egasi"))
         item["tashkilot"] = tozalangan_matn(item.get("tashkilot"))
+        item["turi"] = tozalangan_matn(item.get("turi"))
         item["davri"] = tozalangan_matn(item.get("davri"))
     return rad
 

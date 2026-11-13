@@ -45,6 +45,8 @@ function describeFillResult(message) {
   if (filled.radTizimSababi) parts.push("Tizim sababi");
   if (filled.avtoRad) parts.push(`Avtomobil (${filled.avtoRad} ta)`);
   if (filled.uyRad) parts.push(`Ko'chmas mulk (${filled.uyRad} ta)`);
+  if (filled.rasmiyRad) parts.push(`Rasmiy daromad (${filled.rasmiyRad} ta)`);
+  if (filled.uydaEmasRad) parts.push("Uyda bo'lmagan");
   const tolovMaydonlari = Object.keys(TOLOV_MAYDON_NOMLARI).filter((k) => filled[k]);
   tolovMaydonlari.forEach((k) => parts.push(TOLOV_MAYDON_NOMLARI[k]));
 
@@ -53,10 +55,10 @@ function describeFillResult(message) {
   }
 
   let ogohlantirish = "";
-  if (message.template === "rad" && !filled.radTizimSababi && !filled.avtoRad && !filled.uyRad) {
-    ogohlantirish = " Avtomatik sabab topilmadi — rasmiy/norasmiy daromad yoki \"uyda bo'lmagan\" kabi sabablarni qo'lda kiriting.";
+  if (message.template === "rad" && !filled.radTizimSababi && !filled.avtoRad && !filled.uyRad && !filled.rasmiyRad && !filled.uydaEmasRad) {
+    ogohlantirish = " Avtomatik sabab topilmadi — sababni qo'lda kiriting.";
   } else if (message.template === "rad") {
-    ogohlantirish = " Rasmiy/norasmiy daromad sabablari tizimda tuzilgan ko'rinishda yo'q — kerak bo'lsa qo'lda qo'shing.";
+    ogohlantirish = " Norasmiy bandlik sababi tizimdan olinmaydi — kerak bo'lsa qo'lda qo'shing.";
   }
   if (message.template === "toxtatilgan" && !filled.tizimSababi) {
     ogohlantirish = " Sabab matni topilmadi — qo'lda kiriting.";

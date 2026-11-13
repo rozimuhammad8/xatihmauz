@@ -713,7 +713,8 @@
         <div class="field"><label>Egasi</label><input type="text" class="rasmiyRad-egasi" placeholder="Mullajonov Rozivoy"></div>
         <div class="field"><label>Miqdori (so'm)</label><input type="text" class="rasmiyRad-miqdori" placeholder="2450999"></div>
         <div class="field"><label>Tashkilot</label><input type="text" class="rasmiyRad-tashkilot" placeholder="Maktabgacha talim muasasi"></div>
-        <div class="field"><label>Davri</label><input type="text" class="rasmiyRad-davri" placeholder="2026, Mart"></div>
+        <div class="field"><label>Davri</label><input type="text" class="rasmiyRad-davri" placeholder="Mart, 2026"></div>
+        <div class="field"><label>Daromad turi (ixtiyoriy)</label><input type="text" class="rasmiyRad-turi" placeholder="pensiya to'lovlari"></div>
       </div>`;
     document.getElementById('rasmiyRadContainer').appendChild(div);
     if (prefill){
@@ -721,6 +722,7 @@
       div.querySelector('.rasmiyRad-miqdori').value = prefill.miqdori || '';
       div.querySelector('.rasmiyRad-tashkilot').value = prefill.tashkilot || '';
       div.querySelector('.rasmiyRad-davri').value = prefill.davri || '';
+      div.querySelector('.rasmiyRad-turi').value = prefill.turi || '';
     }
   }
   function renumberItems(type){
@@ -756,6 +758,11 @@
     document.getElementById('uyRadToggle').checked = true;
     document.getElementById('uyRadContent').classList.add('show');
     (items || []).forEach(it => addUyRad(it));
+  };
+  window.__ihmaFillRasmiyRad = function(items){
+    document.getElementById('rasmiyRadToggle').checked = true;
+    document.getElementById('rasmiyRadContent').classList.add('show');
+    (items || []).forEach(it => addRasmiyRad(it));
   };
 
   document.getElementById('tizimSababiToggle').addEventListener('change', function(){
@@ -815,6 +822,7 @@
           miqdori: item.querySelector('.rasmiyRad-miqdori').value.trim(),
           tashkilot: krilToLotin(toSentenceCase(item.querySelector('.rasmiyRad-tashkilot').value.trim())),
           davri: krilToLotin(item.querySelector('.rasmiyRad-davri').value.trim()),
+          turi: krilToLotin(item.querySelector('.rasmiyRad-turi').value.trim()),
         })),
       };
     } else if (currentTemplate === 'toxtatilgan'){

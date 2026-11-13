@@ -210,29 +210,68 @@ def uy_segments(items):
     return segs
 
 
+def davr_ajratish(davri):
+    """'Mart, 2026' ham, '2026, Mart' ham, 'Iyul-Sentyabr, 2026' ham to'g'ri
+    o'qiladi: 4 xonali raqam — yil, qolgani — oy (yoki oylar oralig'i).
+    Avval faqat "oy, yil" tartibi qabul qilinardi, forma namunasi esa
+    "2026, Mart" deb yozilgani uchun yil bilan oy o'rni almashib chiqardi."""
+    year, month = '', ''
+    for part in (davri or '').split(','):
+        part = part.strip()
+        if re.fullmatch(r'\d{4}', part):
+            year = part
+        elif part:
+            month = part
+    month = '-'.join(to_title_case(x) for x in re.split(r'\s*[-–]\s*', month) if x)
+    return month, year
+
+
 def income_text(items):
     if not items:
         return ''
-    owners, orgs, incomes = [], [], []
+    # Eski (qo'lda kiritilgan) shakl: har bir yozuvda tashkilot bor, "turi"
+    # yo'q — matn avvalgidek, bir xil tashkilot/egalar birlashtirilib yoziladi.
+    eski_shakl = all(it.get('tashkilot') and not it.get('turi') for it in items)
+    tail = " oylik daromad hisoblangan va bu minimal iste'mol xarajatlaridan yuqori ekanligi"
+
+    if eski_shakl:
+        owners, orgs, incomes = [], [], []
+        for it in items:
+            owner = to_title_case(it.get('egasi', ''))
+            if owner and owner not in owners:
+                owners.append(owner)
+            org = to_sentence_case(it.get('tashkilot', ''))
+            if org and org not in orgs:
+                orgs.append(org)
+        for it in items:
+            month, year = davr_ajratish(it.get('davri'))
+            amount = format_amount(it.get('miqdori'))
+            incomes.append(f"{year}-yil {month} oyi uchun {amount} so'm")
+        # Jumla ATAYLAB nuqtasiz tugaydi: ortidan rad_xulosa_segments() ning
+        # " sababli sizga ... tayinlash rad etildi." qismi ulanadi.
+        return ' va '.join(orgs) + ' tomonidan ' + ' va '.join(owners) + "ga " + ', '.join(incomes) + tail
+
+    # Yangi shakl (sr.ihma.uz'dan avtomatik): tashkilot noma'lum bo'lishi
+    # mumkin, davr — oraliq ("Iyul-Sentyabr"), summa — shu davr bo'yicha
+    # o'rtacha OYLIK daromad, "turi" — tizimdagi daromad manbai nomi.
+    clauses = []
     for it in items:
         owner = to_title_case(it.get('egasi', ''))
-        if owner and owner not in owners:
-            owners.append(owner)
         org = to_sentence_case(it.get('tashkilot', ''))
-        if org and org not in orgs:
-            orgs.append(org)
-    for it in items:
-        parts = (it.get('davri') or '').split(',')
-        month = to_title_case(parts[0].strip()) if len(parts) > 0 else ''
-        year = parts[1].strip() if len(parts) > 1 else ''
+        month, year = davr_ajratish(it.get('davri'))
+        oy_soz = 'oylari' if re.search(r'[-–\s]', month) else 'oyi'
         amount = format_amount(it.get('miqdori'))
-        incomes.append(f"{year}-yil {month} oyi uchun {amount} so'm")
-    # Jumla ATAYLAB nuqtasiz tugaydi: ortidan rad_xulosa_segments() ning
-    # " sababli sizga ... tayinlash rad etildi." qismi ulanadi.
+        turi = (it.get('turi') or '').strip()
+        turi = turi[:1].lower() + turi[1:] if turi else 'daromad'
+        clauses.append(
+            (f"{org} tomonidan " if org else '') + f"{owner}ga "
+            f"{year}-yil {month} {oy_soz} uchun o'rtacha oylik {amount} so'm "
+            f"miqdorida {turi} hisoblangan"
+        )
     return (
-        ' va '.join(orgs) + ' tomonidan ' + ' va '.join(owners) + "ga " +
-        ', '.join(incomes) +
-        " oylik daromad hisoblangan va bu minimal iste'mol xarajatlaridan yuqori ekanligi"
+        ', '.join(clauses) +
+        " va oilaning har bir a'zosiga to'g'ri keladigan o'rtacha oylik jami daromad "
+        "minimal iste'mol xarajatlaridan yuqori ekanligi"
     )
 
 

@@ -888,6 +888,30 @@ class RadXulosaTest(TestCase):
                 )
                 self.assertNotIn("sababli sababli", matn)
 
+    def test_daromad_davri_yil_oy_tartibidan_qat_iy_nazar(self):
+        """"2026, Mart" ham, "Mart, 2026" ham bir xil ("2026-yil Mart oyi")
+        chiqishi kerak — avval birinchisi "Mart-yil 2026 oyi" bo'lib chiqardi."""
+        from reestr.docx_generator import income_text
+        for davri in ("2026, Mart", "Mart, 2026"):
+            matn = income_text([{"egasi": "a diyor", "miqdori": "1450543",
+                                 "tashkilot": "Hokimlik", "davri": davri}])
+            self.assertIn("2026-yil Mart oyi uchun 1 450 543 so'm", matn, davri)
+
+    def test_avtomatik_daromad_matni(self):
+        """sr.ihma.uz'dan kelgan daromad: tashkilot yo'q, davr — oraliq, turi bor."""
+        from reestr.docx_generator import income_text
+        matn = income_text([
+            {"egasi": "Aliyev Vali", "miqdori": "7025994", "tashkilot": "",
+             "davri": "Iyul-Sentyabr, 2026", "turi": ""},
+            {"egasi": "Aliyeva Gul", "miqdori": "1500000", "tashkilot": "",
+             "davri": "Iyul-Sentyabr, 2026", "turi": "Pensiya to'lovlari"},
+        ])
+        self.assertIn("Aliyev Valiga 2026-yil Iyul-Sentyabr oylari uchun o'rtacha oylik "
+                      "7 025 994 so'm miqdorida daromad hisoblangan", matn)
+        self.assertIn("1 500 000 so'm miqdorida pensiya to'lovlari hisoblangan", matn)
+        self.assertTrue(matn.endswith("minimal iste'mol xarajatlaridan yuqori ekanligi"))
+        self.assertNotIn("tomonidan", matn)
+
     def test_shablon_va_korinish_bir_xil(self):
         """Brauzerdagi preview (letter_text.py) .docx bilan bir xil matn
         ko'rsatishi shart — ikkalasi ham bitta manba (docx_generator.py
